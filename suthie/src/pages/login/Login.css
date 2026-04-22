@@ -1,0 +1,441 @@
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Prompt:wght@600;700;800&display=swap');
+
+*, *::before, *::after { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+/* ── PAGE — Full Background (ทั้ง Desktop และ Mobile) ── */
+.login-page { 
+  padding-top: 70px; 
+  height: 100vh;
+  width: 100vw;
+  background: url('../../assets/login-image.png') no-repeat center center;
+  background-size: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* ── 1. เพิ่มสไตล์ Header ด้านบน ── */
+.login-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: #ffffff; /* พื้นหลังขาวตามรูป */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05); /* เงาจางๆ ให้ดูสะอาดตา */
+}
+
+.header-logo img {
+  height: 100px; /* ขนาดโลโก้พอดีคำ */
+  width: auto;
+}
+/* ซ่อน Panel เดิมออกถาวร */
+.login-left { display: none !important; }
+.login-left__illust img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 40px;
+  /* 🟢 เพิ่ม CSS Filter ตรงนี้ */
+  filter: brightness(0.8) saturate(0.6); /* ปรับความสว่างเหลือ 80% และความสดของสีเหลือ 60% */
+  transition: filter 0.3s ease; /* เพิ่ม Transition เพื่อให้ดูนุ่มนวลเวลาโหลด */
+}
+
+.login-right {
+  width: 100%;
+  max-width: 480px;
+  background: transparent !important;
+  display: flex; 
+  flex-direction: column; 
+  align-items: center;
+  justify-content: center;
+  padding: 24px; 
+  z-index: 10;
+  position: relative;
+}
+
+/* ── Glassmorphism Card (สวยเหมือน Desktop) ── */
+.login-right-card {
+  font-family: 'Noto Sans Thai', sans-serif;
+  position: relative;
+  margin-top: 50px;
+  padding: 50px 35px;
+  padding-top: 90px !important;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(25px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+  border-radius: 35px !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15) !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  animation: fadeSlideUpCard 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── LOGO ── */
+.login-logo-img { 
+  width: 180px; 
+  height: auto;
+  display: block;
+}
+.login-logo-float {
+  width: 150px;  
+  height: 150px;
+  position: absolute;
+  top: -10px; 
+  left: 50%;
+  z-index: 10;
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeSlideUpLogo 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+/* ── FORM & INPUTS ── */
+.login-form { width: 100%; display: flex; flex-direction: column; gap: 14px; }
+.login-input-wrap { position: relative; display: flex; align-items: center; }
+
+.login-input-icon { 
+  position: absolute; 
+  left: 18px; 
+  color: #b0b0b0; 
+  z-index: 5; 
+}
+
+.login-input {
+  width: 100%; 
+  padding: 14px 44px 14px 48px; 
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 50px;
+  font-size: 15px; 
+  color: #333;
+  background: #ffffff !important;
+  outline: none; 
+  transition: all 0.2s; 
+}
+
+.login-password-toggle {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  z-index: 5;
+}
+/* ════════════════════════════════════════
+   AUTOCOMPLETE DROPDOWN - ปรับให้สวยและอ่านง่าย
+════════════════════════════════════════ */
+.ac-dropdown {
+  width: 100%;
+  position: absolute;
+  top: calc(100% + 8px); /* เว้นระยะห่างจากช่องกรอกเล็กน้อย */
+  left: 0; 
+  right: 0;
+  background: rgba(255, 255, 255, 0.94) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 18px; /* ปรับขอบให้มนเข้ากับดีไซน์ใหม่ */
+  border: 1.5px solid rgba(249, 115, 22, 0.3) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1000; /* มั่นใจว่าอยู่บนสุด */
+  animation: ac-drop-in 0.2s ease-out;
+}
+
+@keyframes ac-drop-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ส่วนหัวของ Dropdown */
+.ac-dropdown__header {
+  display: flex; 
+  align-items: center; 
+  gap: 8px;
+  padding: 12px 16px;
+  font-size: 12px; 
+  font-weight: 700;
+  color: #f97316; /* ใช้สีส้มเพื่อให้สะดุดตา */
+  background: rgba(249, 115, 22, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* รายการบัญชี */
+.ac-item {
+  display: flex; 
+  align-items: center; 
+  gap: 12px;
+  padding: 12px 16px; 
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.ac-item:last-child { border-bottom: none; }
+
+/* เมื่อเอาเมาส์ไปชี้หรือกดลูกศรเลือก */
+.ac-item:hover, .ac-item--active { 
+ background: rgba(249, 115, 22, 0.08);
+}
+
+/* วงกลมตัวอักษรแรกของชื่อ */
+.ac-item__avatar {
+  width: 36px; 
+  height: 36px; 
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f97316 0%, #ff9d5c 100%);
+  box-shadow: 0 4px 10px rgba(249, 115, 22, 0.2);
+  color: #fff; 
+  font-size: 15px; 
+  font-weight: 700;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ac-item__text { 
+  flex: 1; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 2px; 
+  min-width: 0; 
+}
+
+.ac-item__name { 
+  font-size: 14.5px; 
+  font-weight: 600; 
+  color: #222; 
+}
+
+.ac-item__sub { 
+  font-size: 11px; 
+  color: #888; 
+}
+
+/* ตัวหนังสือที่ไฮไลท์เวลาพิมพ์ค้นหา */
+.ac-highlight {
+  background: rgba(249, 115, 22, 0.2); 
+  color: #d85f00;
+  font-weight: 800;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+/* ── ERROR MESSAGE STYLE ── */
+.login-error {
+  background: rgba(254, 226, 226, 0.8); 
+  color: #dc2626; 
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  margin-top: 10px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* 🟢 Animation สั่นเตือนเวลาพิมพ์ผิด */
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+/* ── ซ่อนไอคอนลูกตาเริ่มต้นของเบราว์เซอร์ ── */
+/* สำหรับ Microsoft Edge */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
+/* สำหรับเบราว์เซอร์อื่นๆ ที่อาจมีฟีเจอร์คล้ายกัน */
+input::-webkit-contacts-auto-fill-button,
+input::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+}
+
+/* ปุ่มลบบัญชีออกจากประวัติ */
+.ac-item__remove {
+  background: rgba(0, 0, 0, 0.08); 
+  border: 1px solid rgba(0, 0, 0, 0.05); 
+  color: #666; 
+  font-size: 11px;
+  font-weight: bold;
+  width: 26px; 
+  height: 26px; 
+  border-radius: 50%;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  cursor: pointer; 
+  transition: all 0.2s ease;
+  margin-left: 8px; 
+  flex-shrink: 0;
+}
+
+.ac-item__remove:hover { 
+  background: #ffeded !important; 
+  color: #ef4444 !important;      
+  border-color: #fee2e2;
+  transform: scale(1.1);          
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+/* ── CHECKBOX & BUTTONS ── */
+.login-remember-row {
+  display: flex; 
+  align-items: center; 
+  width: 100%; 
+}
+.login-remember { display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  cursor: pointer;
+  margin: 5px 0;}
+.login-remember__box {
+ width: 22px; 
+  height: 22px; 
+  border-radius: 50%; /* ทรงกลม */
+  border: 2px solid rgba(255, 255, 255, 0.6); 
+  background: #ffffff; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  transition: all .2s ease;
+  cursor: pointer;
+  position: relative;
+}
+.login-remember__box.checked { 
+  background: #f97316; 
+  border-color: #f97316;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+}
+
+.login-remember__text {
+  font-size: 14.5px;
+  color: #333; 
+  font-weight: 500;
+}
+
+.login-btn {
+  width: 100%; padding: 14px; background: #f97316; color: #fff;
+  font-family: 'Noto Sans Thai', sans-serif !important; font-size: 17px; font-weight: 700;
+  border: none; border-radius: 50px; cursor: pointer; 
+  box-shadow: 0 5px 15px rgba(249,115,22,.3);
+}
+
+.login-back { 
+  background: none; border: none; color: #666;
+  font-size: 13.5px; cursor: pointer; margin-top: 10px;
+  font-family: 'Noto Sans Thai', sans-serif !important;
+  transition: color 0.2s;
+}
+.login-back:hover { color: #f97316; }
+
+/* ── TURNSTILE ── */
+.turnstile-wrap {
+  display: flex !important; justify-content: center !important;
+  width: 100% !important; min-height: 70px; margin: 5px 0;
+}
+
+/* ── RESPONSIVE: ปรับขนาด Card ให้พอดีหน้าจอมือถือ ── */
+@media (max-width: 768px) {
+  .login-right {
+    padding-top: 50px; 
+    padding-bottom: 30px;
+  }
+  .login-right-card {
+    padding: 30px 20px;
+    margin-top: 40px; 
+    padding-top: 55px !important; 
+    border-radius: 30px !important;
+  }
+  .login-logo-float {
+    width: 110px !important;  
+    height: 110px !important;
+    top: 25px !important;  
+    left: 50%;
+    transform: translateX(-50%) !important;
+    position: absolute !important;
+    z-index: 20 !important;
+    background: #ffffff;
+    padding: 15px !important;
+    border-radius: 50%;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    animation: fadeSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  }
+  .login-logo-img {
+    width: 160px !important; 
+    height: auto; 
+  }
+  .turnstile-wrap { transform: scale(0.85); margin: 0; }
+  .ac-item__remove {
+    width: 32px; 
+    height: 32px; 
+    font-size: 12px;
+    background: rgba(0, 0, 0, 0.08);
+  }
+}
+
+@keyframes fadeSlideUp {
+  from { 
+    opacity: 0; 
+    transform: translateX(-50%) translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateX(-50%) translateY(0); 
+  }
+}
+/* 🟢 สำหรับ Card (กึ่งกลางหน้าจอปกติ) */
+@keyframes fadeSlideUpCard {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+/* 🟢 สำหรับโลโก้ (กึ่งกลางด้วย translateX -50%) */
+@keyframes fadeSlideUpLogo {
+  from { 
+    opacity: 0; 
+    transform: translateX(-50%) translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateX(-50%) translateY(0); 
+  }
+}

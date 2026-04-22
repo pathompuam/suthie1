@@ -1,0 +1,396 @@
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
+
+*, *::before, *::after { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+body { 
+  font-family: 'Sarabun', sans-serif; 
+}
+
+/* ─── PAGE ─── */
+.ar-page {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+}
+
+/* ─── NAV ─── */
+.ar-nav {
+  width: 100%;
+  height: 72px;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(16px, 5vw, 48px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+}
+
+/* ✅ Wrapper กัน global CSS บีบ img */
+.ar-nav__logo-wrap {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 8px 0;
+  flex-shrink: 0;
+}
+
+/* ✅ Logo ใช้ height: 100% เต็ม wrapper — ไม่โดน global img บีบ */
+.ar-nav__logo-wrap .ar-nav__logo {
+  height: 100px;
+  width: auto !important;
+  max-height: none !important;
+  max-width: 300px !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+.ar-btn-close {
+  background: #f1f5f9;
+  border: none;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  white-space: nowrap; /* กัน text ตัดบรรทัดบนจอเล็ก */
+}
+
+.ar-btn-close:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+/* ─── CONTAINER ─── */
+.ar-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 30px 20px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ─── SUCCESS HERO HEADER ─── */
+.ar-success-hero {
+  background: white;
+  border-radius: 12px;
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+  border: 1px solid #e2e8f0;
+  animation: arPopIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.ar-success-icon {
+  width: 64px;
+  height: 64px;
+  background: #ecfdf5;
+  color: #10b981;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  box-shadow: 0 0 0 8px #d1fae5;
+  animation: arScaleUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+
+.ar-hero-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.ar-hero-subtitle {
+  font-size: 15px;
+  color: #64748b;
+  line-height: 1.5;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* ─── RESULT CARD ─── */
+.ar-result-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  border-left: 8px solid var(--card-color);
+  padding: 24px 28px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  opacity: 0;
+  animation: arFadeInUp 0.5s ease-out forwards;
+}
+
+.ar-result-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06);
+}
+
+/* ─── CARD HEAD ─── */
+.ar-result-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  border-bottom: 1px dashed #e2e8f0;
+  padding-bottom: 20px;
+}
+
+.ar-level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.ar-card-title {
+  font-size: 14.5px;
+  color: #64748b;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.ar-score-wrapper {
+  padding: 10px 20px;
+  border-radius: 12px;
+  text-align: right;
+  border: 1px solid;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ar-score__val {
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ar-score__label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* ─── CARD BODY ─── */
+.ar-result-card__body {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 24px;
+  align-items: stretch;
+}
+
+/* ─── DOCTOR'S ADVICE BOX ─── */
+.ar-advice-box {
+  border: 1px solid;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ar-advice-box__title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ar-advice__list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex: 1;
+}
+
+.ar-advice__list li {
+  position: relative;
+  padding-left: 20px;
+  font-size: 14.5px;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.ar-advice__list li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  top: -2px;
+  font-size: 20px;
+  color: #94a3b8;
+}
+
+/* ─── VISUAL IMAGE SECTION ─── */
+.ar-visual {
+  background: var(--grad);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.ar-visual__frame {
+  flex: 1;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+}
+
+.ar-visual__frame img {
+  width: 120px;
+  height: auto;
+  object-fit: contain;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ar-result-card:hover .ar-visual__frame img {
+  transform: scale(1.15) translateY(-5px);
+}
+
+/* ─── ACTIONS (BUTTONS) ─── */
+.ar-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 10px;
+  animation: arFadeInUp 0.6s ease-out 0.6s forwards;
+  opacity: 0;
+}
+
+.ar-btn {
+  padding: 14px 28px;
+  font-size: 15px;
+  font-family: inherit;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.ar-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.ar-btn--ghost {
+  background: white;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.ar-btn--ghost:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+/* ─── KEYFRAMES ANIMATION ─── */
+@keyframes arPopIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes arScaleUp {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes arFadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── RESPONSIVE ─── */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .ar-result-card__body {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .ar-visual {
+    order: -1;
+  }
+
+  .ar-result-card__head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .ar-score-wrapper {
+    justify-content: space-between;
+  }
+
+  /* ✅ Logo tablet — wrapper เล็กลงนิดหน่อย */
+  .ar-nav__logo-wrap {
+    padding: 10px 0;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .ar-container {
+    padding: 20px 16px 40px;
+  }
+
+  .ar-hero-title {
+    font-size: 20px;
+  }
+
+  .ar-result-card {
+    padding: 20px 16px;
+  }
+
+  .ar-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .ar-btn {
+    width: 100%;
+  }
+
+  /* ✅ Logo mobile */
+  .ar-nav__logo-wrap {
+    padding: 12px 0;
+  }
+
+  /* ✅ ปุ่มปิดย่อขนาดบน mobile */
+  .ar-btn-close {
+    font-size: 13px;
+    padding: 7px 12px;
+  }
+}

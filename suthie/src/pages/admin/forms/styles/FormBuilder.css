@@ -443,7 +443,7 @@ to { opacity: 1; transform: translateY(0); }
 .sfb-score-indicator-badge { position: absolute; top: -14px; right: 16px; background: #fff8e1; color: #fbbc04; border: 1px solid #ffecb3; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); z-index: 10; transition: all 0.3s ease; }
 /* =========================================
    🟢 3. ปุ่มพับเก็บตารางคะแนน (Collapsible Rules)
-   ========================================= */
+   ========================================= */ 
 .sfb-scoring-accordion-wrapper { margin-top: 16px; border-top: 1px dashed #e0e0e0; padding-top: 16px; }
 .sfb-btn-toggle-rules { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; background: #f8f9fa; border: 1px dashed #dadce0; border-radius: 12px; color: #1967d2; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .sfb-btn-toggle-rules:hover { background: #e8f0fe; border-color: #1967d2; }
@@ -453,7 +453,7 @@ to { opacity: 1; transform: translateY(0); }
       margin 0.3s ease; }
 .sfb-scoring-rules-collapse.open { max-height: 2000px; opacity: 1; margin-top: 16px; overflow: visible; }
 /* =========================================
-   19. ป้ายกำกับ (Badges) & กฎการให้คะแนน (Scoring Rules)
+   19. ป้ายกำกับ (Badges) & กฎการให้คะแนน 
    ========================================= */
 .sfb-dropdown-highlight-scored { color: #1967d2; font-weight: bold; }
 .sfb-dropdown-highlight-editable { color: #f59e0b; font-weight: bold; }

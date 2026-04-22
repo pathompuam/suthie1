@@ -1,0 +1,14 @@
+# ครอบคลุม node_modules ทุกที่ในโปรเจกต์
+node_modules/
+suthie/node_modules/
+server/node_modules/
+
+# ครอบคลุมไฟล์ความลับ (.env)
+.env
+suthie/.env
+server/.env
+
+# ไฟล์จุกจิกของระบบ
+.DS_Store
+dist/
+build/

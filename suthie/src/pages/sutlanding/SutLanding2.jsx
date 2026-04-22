@@ -254,7 +254,7 @@ export default function SutLanding2() {
               <div className="sut2-hero__cta-group">
                 <button
                   className="sut2-hero__cta"
-                  onClick={() => window.scrollTo({ top: window.innerHeight * 0.9, behavior: "smooth" })}>เริ่มประเมินสุขภาพ
+                  onClick={() => window.scrollTo({ top: window.innerHeight * 0.9, behavior: "smooth" })}>เริ่มต้นรับบริการ
                 </button>
                 <button
                   className="sut2-hero__cta sut2-hero__cta--secondary"

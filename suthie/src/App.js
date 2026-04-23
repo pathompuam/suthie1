@@ -2,11 +2,11 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { lazy } from "react";
 
 // ✅ โหลดเฉพาะหน้าที่ใช้บ่อย/หน้าแรกแบบปกติ
-import SutLanding from "./pages/sutlanding/SutLanding";
+//import SutLanding from "./pages/sutlanding/SutLanding";
 import Login from "./pages/login/Login";
 import SutLanding2 from "./pages/sutlanding/SutLanding2";
 
-// ✅ Lazy load ทุกหน้าที่เหลือ — โหลดเฉพาะตอนเปิดหน้านั้น
+// ✅ Lazy load ทุกหน้าที่เหลือ — โหลดเฉพาะตอนเปิดหน้านั้น 
 const Home = lazy(() => import("./pages/home/Home"));
 const AssessmentResult = lazy(() => import("./pages/result/AssessmentResult"));
 const Dashboard = lazy(() => import("./pages/admin/dashboard"));
@@ -49,7 +49,7 @@ function App() {
     <BrowserRouter>
       {/* ✅ Suspense ครอบทุก Route — แสดง loader ระหว่าง lazy load */}
         <Routes>
-          <Route path="/test" element={<SutLanding />} />
+          {/* <Route path="/test" element={<SutLanding />} /> */}
           <Route path="/" element={<SutLanding2 />} />
           <Route path="/login" element={<Login />} />
         

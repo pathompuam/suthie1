@@ -90,13 +90,21 @@ router.get('/forms/:id/submission-count', async (req, res) => {
     }
 });
 
-// 3.5 ✅ ดึงจำนวนผู้ตอบฟอร์มหลายรายการในครั้งเดียว (Batch API)
+// 3.5 ✅ ดึงจำนวนผู้ตอบฟอร์มหลายรายการในครั้งเดียว (Batch API + 🟢 Caching)
 router.post('/counts', async (req, res) => {
     try {
         const { formIds } = req.body;
         
         if (!Array.isArray(formIds) || formIds.length === 0) {
             return res.status(400).json({ error: 'Invalid formIds' });
+        }
+
+        // 🟢 1. สร้าง Key สำหรับ Cache (เช่น counts_1_2_3)
+        const cacheKey = `counts_${formIds.sort().join('_')}`;
+        
+        // 🟢 2. ถ้ามีใน Cache ให้ส่งกลับทันที ไม่ต้องกวน Database!
+        if (formCache.has(cacheKey)) {
+            return res.json({ data: formCache.get(cacheKey) });
         }
 
         const placeholders = formIds.map(() => '?').join(',');
@@ -110,15 +118,13 @@ router.post('/counts', async (req, res) => {
         const [rows] = await db.query(query, formIds);
         
         const countMap = {};
-        rows.forEach(row => {
-            countMap[row.form_id] = row.count;
+        rows.forEach(row => { countMap[row.form_id] = row.count; });
+        formIds.forEach(formId => {
+            if (!(formId in countMap)) countMap[formId] = 0;
         });
 
-        formIds.forEach(formId => {
-            if (!(formId in countMap)) {
-                countMap[formId] = 0;
-            }
-        });
+        // 🟢 3. จำตัวเลขนี้ไว้ใน Cache 60 วินาที (ให้ตรงกับจังหวะที่หน้าเว็บขอข้อมูลพอดี)
+        formCache.set(cacheKey, countMap, 60);
 
         res.json({ data: countMap });
     } catch (err) {
@@ -345,10 +351,10 @@ router.post('/forms/:id/submit', async (req, res) => {
 });
 
 // 11. ดึงคำตอบทั้งหมด (Dashboard ฝั่งแอดมิน - 🟢 ถอดรหัส & เพิ่ม Pagination)
+
 router.get('/forms/:id/responses', async (req, res) => {
     try {
-        // 🟢 เพิ่มระบบแบ่งหน้า (Pagination) เพื่อป้องกันเซิร์ฟเวอร์โหลดหนักเวลาคนตอบ 4,000+ คน
-        const limit = parseInt(req.query.limit) || 100; // กำหนดให้ดึงครั้งละ 100 รายการ
+        const limit = parseInt(req.query.limit) || 100;
         const offset = parseInt(req.query.offset) || 0;
 
         const [rows] = await db.query(
@@ -356,13 +362,20 @@ router.get('/forms/:id/responses', async (req, res) => {
             [req.params.id, limit, offset]
         );
         
-        const decryptedRows = rows.map(r => {
+        // 🟢 เปลี่ยนจาก .map() ธรรมดา เป็น Promise.all 
+        const decryptedRows = await Promise.all(rows.map(async (r) => {
+            // การใช้ async ใน map จะทำให้ Node.js มองแต่ละรอบเป็น Promise ย่อยๆ
+            // ช่วยให้ Event Loop มีจังหวะหายใจไปรับงานอื่นได้
+            
             if (r.identity_value) r.identity_value = safeDecrypt(r.identity_value);
+            
             if (r.summary_data) {
                 let summary = typeof r.summary_data === 'string' ? JSON.parse(r.summary_data) : r.summary_data;
+                
                 if (summary.display_name) summary.display_name = safeDecrypt(summary.display_name);
                 if (summary.display_phone) summary.display_phone = safeDecrypt(summary.display_phone);
                 if (summary.phone) summary.phone = safeDecrypt(summary.phone);
+                
                 if (summary.raw_answers) {
                     for (const key in summary.raw_answers) {
                         if (key.includes('ชื่อ') || key.includes('เบอร์') || key.includes('โทร') || key.includes('บัตร')) {
@@ -373,7 +386,7 @@ router.get('/forms/:id/responses', async (req, res) => {
                 r.summary_data = summary;
             }
             return r;
-        });
+        }));
 
         res.json(decryptedRows);
     } catch (err) {

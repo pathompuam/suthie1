@@ -132,4 +132,39 @@ api.interceptors.response.use(
     return Promise.reject(err);
   }
 );
+
+// 🟢 1. สร้างตัวแปรจำ Token ไว้ใน RAM เพื่อความรวดเร็ว
+let cachedToken = null;
+
+api.interceptors.request.use((config) => {
+  // 🟢 2. ถ้าไม่มีใน RAM ค่อยไปงัดจาก localStorage (ทำแค่ครั้งแรกที่เปิดเว็บ)
+  if (!cachedToken) {
+    cachedToken = localStorage.getItem('suth_token');
+  }
+  
+  if (cachedToken) {
+    config.headers['Authorization'] = `Bearer ${cachedToken}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401 || err.response?.status === 403) {
+      // 🟢 3. เคลียร์ค่าทิ้งทั้งหมดเมื่อ Token หมดอายุ
+      cachedToken = null;
+      localStorage.removeItem('suth_user');
+      localStorage.removeItem('suth_token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(err);
+  }
+);
+
+// 🟢 4. แถมฟังก์ชันสำหรับเซ็ต Token ใหม่ตอน Login เพื่อให้อัปเดตเข้า RAM ทันที (เผื่อเอาไปใช้ใน Login.jsx)
+export const updateApiToken = (newToken) => {
+  cachedToken = newToken;
+};
+
 export default api;

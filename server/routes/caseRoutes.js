@@ -91,9 +91,10 @@ router.post('/appointments', async (req, res) => {
   } catch (error) { res.status(500).json({ error: "Server Error" }); }
 });
 
+// routes/caseRoutes.js
+
 router.get('/appointments', async (req, res) => {
   try {
-    // 🟢 บังคับจำกัดการดึงข้อมูลเพื่อป้องกันเซิร์ฟเวอร์ค้าง
     const limit = parseInt(req.query.limit) || 100;
     const offset = parseInt(req.query.offset) || 0;
 
@@ -103,10 +104,11 @@ router.get('/appointments', async (req, res) => {
       LEFT JOIN form_responses r ON a.case_id = r.id
       LEFT JOIN service_types s ON a.service_id = s.id
       ORDER BY a.appointment_date ASC
-    `, [limit, offset]); // 🟢 ใส่ limit, offset ตรงนี้
+      LIMIT ? OFFSET ?
+    `, [limit, offset]);
     
-    // ถอดรหัสตอนดึงนัดหมาย
-    const decryptedRows = rows.map(r => {
+    // 🟢 ใช้ Promise.all เพื่อกระจายภาระการถอดรหัส
+    const decryptedRows = await Promise.all(rows.map(async (r) => {
         if (r.identity_value) r.identity_value = safeDecrypt(r.identity_value);
         if (r.summary_data) {
             let summary = typeof r.summary_data === 'string' ? JSON.parse(r.summary_data) : r.summary_data;
@@ -115,7 +117,8 @@ router.get('/appointments', async (req, res) => {
             r.summary_data = summary;
         }
         return r;
-    });
+    }));
+    
     res.json(decryptedRows);
   } catch (err) { res.status(500).json({ message: "เกิดข้อผิดพลาดในการดึงข้อมูลนัดหมาย" }); }
 });

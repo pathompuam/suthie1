@@ -160,51 +160,17 @@ textarea.cdm-form-input { resize: vertical; min-height: 80px; height: auto; }
 .cdm-log-detail-highlight { display: inline-block; padding: 6px 10px; border-radius: 6px; font-size: 13.5px; margin-top: 4px; font-weight: 500; }
 .cdm-log-status { background: #eff6ff; border-left: 3px solid #3b82f6; color: #1e40af; }
 .cdm-log-risk { background: #fef2f2; border-left: 3px solid #ef4444; color: #991b1b; }
-
-.cdm-hist-date-divider {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    padding: 10px 0;
-    margin: 20px 0;
-}
-.cdm-hist-date-divider::before,
-.cdm-hist-date-divider svg:not(.cdm-hist-date-badge svg) {
-    display: none !important; 
-}
-
-.cdm-hist-date-badge {
-    font-weight: 700;
-    color: #64748b;
-    font-size: 14px;
-    background: #f8fafc; 
-    padding: 6px 20px;
-    border-radius: 20px;
-    border: 1px solid #e2e8f0;
-    display: inline-flex;
-    align-items: center;
-    transition: all 0.2s ease;
-}
-.cdm-hist-date-divider:hover .cdm-hist-date-badge {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-}
-.cdm-hist-date-divider.active .cdm-hist-date-badge {
-    color: #007bff;          
-    border-color: #007bff;  
-    background: #f0f7ff;
-    box-shadow: 0 2px 8px rgba(244, 121, 50, 0.1);
-}
-.cdm-hist-date-badge-wrapper {
-   position: relative;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: #ffffff; 
-    padding: 0 15px;
-}
+.cdm-hist-date-divider { display: flex; justify-content: center; align-items: center; position: relative; padding: 15px 0; margin: 20px 0; width: 100%; }
+.cdm-hist-date-divider::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: #e2e8f0; z-index: 1; }
+.cdm-hist-date-badge-wrapper { position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; background: #ffffff; padding: 0 15px; }
+.cdm-hist-date-badge { font-weight: 700; font-size: 14px; color: #64748b; background: #f8fafc; padding: 6px 18px; border-radius: 20px; border: 1px solid #e2e8f0; display: inline-flex; align-items: center; transition: all 0.2s ease; }
+.cdm-hist-date-divider.active .cdm-hist-date-badge { border-color: #007bff; color: #007bff; background: #f0f7ff; }
+.cdm-hist-item-count { font-size: 12px; color: #94a3b8; background: #ffffff; padding-right: 5px; }
+.cdm-log-content-wrapper { overflow: hidden; transition: max-height 0.3s ease-out; }
+.cdm-log-content-wrapper.collapsed { max-height: 80px; position: relative; mask-image: linear-gradient(to bottom, black 50%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%); }
+.cdm-log-content-wrapper.expanded { max-height: 5000px; }
+.cdm-log-toggle-btn { background: none; border: none; color: #007bff; font-size: 13px; font-weight: 700; cursor: pointer; padding: 4px 0; margin-top: 4px; display: inline-flex; align-items: center; transition: opacity 0.2s; }
+.cdm-log-toggle-btn:hover { text-decoration: underline; opacity: 0.8; }
 /* ===================================================
    🟢 TOGGLE BUTTONS FOR DYNAMIC METRICS
    =================================================== */

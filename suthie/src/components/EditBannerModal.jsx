@@ -55,10 +55,12 @@ export default function EditBannerModal({ banner, onClose, onSave }) {
     if (!croppedAreaPixels) return;
     try {
       const cropped = await getCroppedImg(rawImage, croppedAreaPixels);
-      setImage(cropped); // อัปเดตรูปพรีวิวฝั่งขวา
+      setImage(cropped); 
       setIsCropping(false);
       setRawImage(null);
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      alert("ไม่สามารถตัดรูปภาพได้ กรุณาลองใหม่อีกครั้งหรือใช้รูปภาพอื่น");
+    }
   };
 
   const handleSave = () => {

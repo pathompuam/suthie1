@@ -111,7 +111,7 @@ const FormManager = () => {
       const response = await getForms(sortParam);
       setForms(response.data);
     } catch (error) {
-      console.error("Error fetching forms:", error);
+      setForms([]);
     } finally {
       setIsLoading(false);
     }

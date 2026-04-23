@@ -686,7 +686,6 @@ const FormBuilder = () => {
         );
       });
     } catch (error) {
-      console.error("Failed to copy data:", error);
       alert("เกิดข้อผิดพลาดในการคัดลอกข้อมูล");
     }
   };

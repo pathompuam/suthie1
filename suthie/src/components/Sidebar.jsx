@@ -135,7 +135,7 @@ const Sidebar = ({ activeKey = 'dashboard' }) => {
           p.module === "Roles & Permissions" && (p.can_view || p.can_manage || p.can_full)
         );
         setAllowedRolesPage(hasAccess);
-      }).catch(err => console.error("Error loading permissions for sidebar:", err));
+      }).catch(() => {});
     }
   }, [currentRoleId]);
 

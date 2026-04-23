@@ -121,7 +121,7 @@ export default function RiskCases() {
         setSelectedFormId(res.data[0].id);
         setFormStatusFilter('all');
       }
-    }).catch(console.error);
+    }).catch(() => {})
   }, []);
 
   const filteredFormsList = useMemo(() => {
@@ -182,7 +182,7 @@ export default function RiskCases() {
         setVisibleColumns(realQuestions.slice(0, 5).map(q => q.id));
 
       } catch (err) {
-        console.error(err);
+        setResponses([]);
       } finally {
         setIsLoading(false);
       }

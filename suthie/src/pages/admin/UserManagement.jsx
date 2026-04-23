@@ -84,7 +84,7 @@ export default function UserManagement() {
         if (userMod && userMod.can_view_password) {
           setCanViewPassword(true);
         }
-      }).catch(e => console.log(e));
+      }).catch(() => {});
     }
   }, [currentRoleId]);
 
@@ -92,7 +92,7 @@ export default function UserManagement() {
     try {
       const res = await getUsers();
       setUsers(res.data);
-    } catch (err) { console.error("โหลดผู้ใช้ไม่สำเร็จ:", err); }
+    } catch (err) { setUsers([]); }
   };
 
   const handleSaveUser = async (data) => {

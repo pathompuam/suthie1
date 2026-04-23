@@ -145,7 +145,14 @@ const FormView = () => {
             });
           }
         } catch (e) {
-          console.error(e);
+          Swal.fire({
+            icon: 'warning',
+            title: 'ข้อมูลผิดพลาด',
+            text: 'ข้อมูลแบบร่างมีความเสียหาย ไม่สามารถแสดงตัวอย่างได้',
+            confirmButtonColor: '#f59e0b'
+          }).then(() => {
+            navigate(-1);
+          });
         } finally {
           setLoading(false);
         }
@@ -174,8 +181,6 @@ const FormView = () => {
         const response = await getFormById(id);
         setupFormStructure(response.data, activeIdentity);
       } catch (error) {
-        console.error("Error loading form:", error);
-        // 🟢 เปลี่ยน Alert เป็น SweetAlert2
         Swal.fire({
           icon: 'error',
           title: 'ข้อผิดพลาด',
@@ -598,8 +603,6 @@ const FormView = () => {
       });
       navigate("/assessment-result", { state: { results: scoreResultsArray } });
     } catch (error) {
-      console.error("Error submitting:", error);
-      // 🟢 เปลี่ยน Alert เป็น SweetAlert2
       Swal.fire({
         icon: 'error',
         title: 'ข้อผิดพลาด',

@@ -46,8 +46,8 @@ export default function BannerManagement() {
       text: "หากลบแล้วจะไม่สามารถกู้คืนข้อมูลได้!",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#ef4444", // สีแดง (ลบ)
-      cancelButtonColor: "#94a3b8",  // สีเทา (ยกเลิก)
+      confirmButtonColor: "#ef4444", 
+      cancelButtonColor: "#94a3b8",  
       confirmButtonText: "ใช่, ลบเลย!",
       cancelButtonText: "ยกเลิก",
       reverseButtons: true 
@@ -62,17 +62,17 @@ export default function BannerManagement() {
           title: "ลบสำเร็จ!",
           text: "แบนเนอร์ถูกลบออกจากระบบแล้ว",
           icon: "success",
-          timer: 1500, // ปิดอัตโนมัติใน 1.5 วินาที
+          timer: 1500, 
           showConfirmButton: false
         });
       } catch (error) {
-        console.error("Delete error:", error);
+        
         Swal.fire("เกิดข้อผิดพลาด!", "ไม่สามารถลบแบนเนอร์ได้ กรุณาลองใหม่", "error");
       }
     }
   };
 
-  /// ✅ EDIT — บันทึกลง DB ให้เสร็จก่อน แล้วค่อยดึงข้อมูลใหม่มาแสดงผล
+  /// EDIT — บันทึกลง DB ให้เสร็จก่อน แล้วค่อยดึงข้อมูลใหม่มาแสดงผล
   const handleEditBanner = async (updatedBanner) => {
     try {
       await updateBannerImage(updatedBanner.id, {
@@ -83,7 +83,7 @@ export default function BannerManagement() {
       await loadBanners(); 
 
     } catch (err) {
-      console.error("อัปเดตแบนเนอร์ไม่สำเร็จ:", err);
+      
       alert("อัปเดตแบนเนอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
     }
   };
@@ -91,7 +91,7 @@ export default function BannerManagement() {
   const nextSlide = () => setCurrentSlide(prev => prev === banners.length - 1 ? 0 : prev + 1);
   const prevSlide = () => setCurrentSlide(prev => prev === 0 ? banners.length - 1 : prev - 1);
 
-  // 🟢 ตัวแปรเช็คว่าแบนเนอร์ครบ 5 รูปหรือยัง
+  //  ตัวแปรเช็คว่าแบนเนอร์ครบ 5 รูปหรือยัง
   const isLimitReached = banners.length >= 5;
 
   return (
@@ -101,8 +101,6 @@ export default function BannerManagement() {
 
         <div className="bm-header">
           <h2 className="bm-title" style={{ color: '#1e293b', margin: 0 }}>จัดการภาพแบนเนอร์</h2>
-          
-          {/* 🟢 เช็คเงื่อนไข: ถ้าครบ 5 รูป ให้ปุ่มจางลงและกดไม่ได้ */}
           <button 
             className="bm-add-btn" 
             onClick={() => {
@@ -127,7 +125,6 @@ export default function BannerManagement() {
           <div className="bm-table-container">
             <div className="bm-table-card">
               
-              {/* 🟢 ป้ายแจ้งเตือนแบบ Friendly */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', flexWrap: 'wrap', gap: '10px' }}>
                 <h3 style={{ margin: 0, fontWeight: '800', color: '#1e293b', fontSize: '20px' }}>รายการภาพ Banner ทั้งหมด</h3>
                 <span style={{ 

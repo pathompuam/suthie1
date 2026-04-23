@@ -1,5 +1,5 @@
 /* ============================================================
-   BANNER MANAGEMENT (Admin Original Theme - Prefix: bm-)
+   BANNER MANAGEMENT 
    ============================================================ */
 
 .bm-wrapper {
@@ -63,16 +63,16 @@
 .bm-content-grid {
   display: flex;
   gap: 30px;
-  align-items: flex-start; /* ให้กล่องเริ่มจากด้านบน */
+  align-items: flex-start; 
 }
 
 .bm-table-container {
-  flex: 1; /* ตารางกินพื้นที่ที่เหลือทั้งหมด */
-  min-width: 0; /* ป้องกันตารางล้นขอบ */
+  flex: 1; 
+  min-width: 0; 
 }
 
 .bm-preview-container {
-  width: 420px; /* ฟิกซ์ความกว้างฝั่งพรีวิว */
+  width: 420px; 
   flex-shrink: 0;
 }
 
@@ -143,9 +143,9 @@
 }
 
 .bm-slide-btn svg {
-  width: 22px !important;     /* ล็อคความกว้างไอคอน */
-  height: 22px !important;    /* ล็อคความสูงไอคอน */
-  flex-shrink: 0 !important;  /* 🟢 สั่งห้ามโดนบีบเด็ดขาด! */
+  width: 22px !important;    
+  height: 22px !important;   
+  flex-shrink: 0 !important;  
   display: block !important;
 }
 
@@ -192,9 +192,9 @@
   border-collapse: separate !important; 
   border-spacing: 0; 
   border-radius: 12px;
-  border: none !important; /* 🟢 ลบเส้นขอบตารางแบบเดิมที่มีปัญหาออก */
-  box-shadow: 0 0 0 1px #e2e8f0; /* 🟢 ใช้เงา 1px สร้างเป็นขอบตารางแทน (เส้นจะคมกริบและไม่โดนบัง) */
-  overflow: hidden; /* 🟢 ตัดส่วนเกินที่ล้นมุมโค้งออกให้หมด */
+  border: none !important; 
+  box-shadow: 0 0 0 1px #e2e8f0; 
+  overflow: hidden; 
 }
 
 .bm-table-card thead th {
@@ -207,7 +207,6 @@
   border-right: 1px solid rgba(255, 255, 255, 0.2); 
 }
 
-/* 🟢 ล็อคความมนที่มุมบนและล่าง */
 .bm-table-card thead tr th:first-child { border-top-left-radius: 12px; }
 .bm-table-card thead tr th:last-child { border-top-right-radius: 12px; border-right: none !important; }
 .bm-table-card tbody tr:last-child td:first-child { border-bottom-left-radius: 12px; }
@@ -220,25 +219,22 @@
   border-right: 1px solid #e2e8f0;  
   color: #475569;
   vertical-align: middle;
-  background-color: #ffffff; /* 🟢 เติมสีพื้นหลังให้ชัวร์ว่าไม่โปร่งใส */
+  background-color: #ffffff; 
 }
 
-/* 🟢 ลบเส้นขวาสุดของคอลัมน์สุดท้ายออก เพื่อไม่ให้ซ้อนกับขอบเงา */
 .bm-table-card td:last-child, 
 .bm-table-card th:last-child { 
   border-right: none !important; 
 }
 
-/* 🟢 ลบเส้นล่างสุดของแถวสุดท้ายออก เพื่อไม่ให้ซ้อนกับขอบเงา */
 .bm-table-card tbody tr:last-child td {
   border-bottom: none !important; 
 }
 
-/* สีตอนเอาเมาส์ชี้แถว */
 .bm-table-card tbody tr:hover td { 
   background-color: #fffaf7 !important; 
 }
-/* Column Widths */
+
 .bm-col-image { width: 35%; padding: 12px !important; }
 .bm-col-name { width: 45%; font-weight: normal; }
 .bm-col-action { width: 140px ; text-align: center; }
@@ -330,11 +326,16 @@
   .bm-content-grid { 
     flex-direction: column-reverse; 
     gap: 20px;
+    align-items: center;
+  }
+
+  .bm-table-card .image-cell {
+    justify-content: center; 
   }
 
   .bm-preview-container { 
     width: 100%; 
-    max-width: 100%; 
+    max-width: 600px; 
     position: static; 
   }
 
@@ -405,7 +406,6 @@
     width: 45px !important;             
     height: 45px !important;
   }
-  /* กรอบแต่ละรายการในมือถือ */
   .bm-table-card tr { 
     background: #ffffff; 
     border: 1px solid #e2e8f0 !important; 
@@ -419,13 +419,12 @@
   .bm-table-card .image-cell { flex-direction: column; gap: 10px; }
   .bm-col-image img, .bm-table-card .banner-thumb { width: 100% !important; max-width: 280px; margin: 0 auto; }
   
-  /* จัดกลุ่มปุ่มในมือถือให้สวยงาม */
   .bm-col-action { 
     width: 100% !important; 
     display: flex !important; 
     justify-content: center !important; 
     padding-top: 15px !important;
-    border-top: 1px dashed #e2e8f0; /* เส้นประคั่นปุ่ม */
+    border-top: 1px dashed #e2e8f0; 
     margin-top: 10px;
   }
 }

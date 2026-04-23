@@ -142,7 +142,7 @@ export default function CaseData() {
             setFormStatusFilter('all');
           }
         }
-      } catch (err) { console.error(err); }
+      } catch (err) { }
     };
     fetchForms();
   }, [initialFormId]);
@@ -205,7 +205,7 @@ export default function CaseData() {
         setRisk("");
 
       } catch (err) {
-        console.error(err);
+        
         setCurrentFormDetails(null); setResponses([]);
       } finally {
         setIsLoading(false);

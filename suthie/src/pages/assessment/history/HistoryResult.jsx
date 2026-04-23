@@ -21,7 +21,7 @@ import {
 
 import { FaChartBar } from 'react-icons/fa';
 
-import { CLINIC_INFO, stripHtml, formatDate, getRiskInfo, isPhoneQuestion, formatAnswerValue } from './historyUtils';
+import { CLINIC_INFO, stripHtml, formatDate, getRiskInfo, formatAnswerValue } from './historyUtils';
 import { HeroEditableField, MaskedIdField, EditableAnswerField, EditableField, Toast } from './components/HistoryWidgets';
 
 // 🟢 Component สำหรับจัดการข้อความยาวๆ
@@ -215,7 +215,6 @@ export default function HistoryResult() {
         if (typeof q === 'string') q = JSON.parse(q);
         setFormQuestionsMap(prev => ({ ...prev, [record.form_id]: q }));
       } catch (e) {
-        console.error("ไม่สามารถโหลดโครงสร้างคำถามได้", e);
       }
     }
 
@@ -755,7 +754,7 @@ if (!data.length) return (
                                               value: newVal,
                                               question_id: qid
                                            });
-                                        } catch(err) { console.error(err); }
+                                        } catch(err) {  }
                     
                                         setFormAnswers(prev => { 
                                           const updated = (prev[record.id] || []).map(a => 

@@ -76,7 +76,7 @@ export default function Login() {
         try {
           window.turnstile.remove(widgetIdRef.current);
           widgetIdRef.current = null;
-        } catch (e) { console.error(e) }
+        } catch (e) {}
       }
     };
   }, []);

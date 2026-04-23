@@ -5,7 +5,9 @@ const db = require('../config/db');
 const { sendTelegramAlert } = require('../utils/telegram'); 
 // 🟢 นำเข้าระบบเข้ารหัส
 const { encrypt, decrypt, hmacHash } = require('../utils/encryption');
-
+const NodeCache = require('node-cache');
+// ตั้งค่าให้จำไว้ 60 วินาที (1 นาที) เพื่อให้หน้าเว็บไม่อืด แต่แอดมินแก้ฟอร์มแล้วยังอัปเดตไวอยู่
+const formCache = new NodeCache({ stdTTL: 60 });
 // Helper ถอดรหัส (ถ้าเป็น plain text เดิม จะคืนค่าเดิมกลับไป)
 const safeDecrypt = (val) => decrypt(val) || val;
 
@@ -25,6 +27,7 @@ router.post('/save-form', async (req, res) => {
       publish_start_date || null, publish_end_date || null
     ];
     const [result] = await db.query(query, values);
+    formCache.flushAll();
     res.json({ message: "Form saved successfully", id: result.insertId });
   } catch (error) {
     console.error(error);
@@ -36,6 +39,14 @@ router.post('/save-form', async (req, res) => {
 router.get('/forms', async (req, res) => {
     try {
         const sort = req.query.sort || 'lastOpened';
+
+        const cacheKey = `all_forms_${sort}`; // 🟢 ตั้งชื่อกุญแจแคช
+
+        // 🟢 1. เช็ค Cache ก่อน
+        if (formCache.has(cacheKey)) {
+            return res.json(formCache.get(cacheKey));
+        }
+
         const [rows] = await db.query(`SELECT id, title, description, theme, updated_at, status, clinic_type, form_type, publish_start_date, publish_end_date FROM forms`);
         
         rows.sort((a, b) => {
@@ -60,6 +71,8 @@ router.get('/forms', async (req, res) => {
                 publish_start_date: form.publish_start_date, publish_end_date: form.publish_end_date 
             };
         });
+        // 🟢 2. จำข้อมูลใส่ Cache
+        formCache.set(cacheKey, formattedForms);
         res.json(formattedForms);
     } catch (err) {
         console.error("Error fetching forms:", err);
@@ -74,6 +87,43 @@ router.get('/forms/:id/submission-count', async (req, res) => {
         res.json({ count: rows[0].count });
     } catch (err) {
         res.status(500).json({ count: 0 });
+    }
+});
+
+// 3.5 ✅ ดึงจำนวนผู้ตอบฟอร์มหลายรายการในครั้งเดียว (Batch API)
+router.post('/counts', async (req, res) => {
+    try {
+        const { formIds } = req.body;
+        
+        if (!Array.isArray(formIds) || formIds.length === 0) {
+            return res.status(400).json({ error: 'Invalid formIds' });
+        }
+
+        const placeholders = formIds.map(() => '?').join(',');
+        const query = `
+            SELECT form_id, COUNT(*) as count 
+            FROM form_responses 
+            WHERE form_id IN (${placeholders}) 
+            GROUP BY form_id
+        `;
+
+        const [rows] = await db.query(query, formIds);
+        
+        const countMap = {};
+        rows.forEach(row => {
+            countMap[row.form_id] = row.count;
+        });
+
+        formIds.forEach(formId => {
+            if (!(formId in countMap)) {
+                countMap[formId] = 0;
+            }
+        });
+
+        res.json({ data: countMap });
+    } catch (err) {
+        console.error('Error fetching counts:', err);
+        res.status(500).json({ error: 'Failed to fetch counts' });
     }
 });
 
@@ -102,6 +152,7 @@ router.put('/forms/:id', async (req, res) => {
       clinic_type || 'general', form_type || 'Registration', publish_start_date || null, publish_end_date || null, formId
     ];
     await db.query(query, values);
+    formCache.flushAll();
     res.json({ message: "Form updated successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to update form" });
@@ -112,6 +163,7 @@ router.put('/forms/:id', async (req, res) => {
 router.delete('/forms/:id', async (req, res) => {
     try {
         await db.query("DELETE FROM forms WHERE id = ?", [req.params.id]);
+        formCache.flushAll();
         res.json({ message: "ลบฟอร์มสำเร็จ!" });
     } catch (err) {
         res.status(500).json({ message: "เกิดข้อผิดพลาดในการลบฟอร์ม" });
@@ -147,6 +199,7 @@ router.patch('/forms/:id/image', async (req, res) => {
 router.patch('/forms/:id/status', async (req, res) => {
   try {
     await db.query("UPDATE forms SET status = ? WHERE id = ?", [req.body.status, req.params.id]);
+    formCache.flushAll();
     res.json({ message: "อัปเดตสถานะสำเร็จ" });
   } catch (error) {
     res.status(500).json({ error: "ไม่สามารถอัปเดตสถานะได้" });
@@ -185,7 +238,6 @@ router.post('/forms/:id/submit', async (req, res) => {
         // 🟢 2. ตรวจสอบหา Master Case หรือสร้างใหม่
         let masterCaseId = null;
         if (hashIdentity) {
-            // ใช้ mastercases (พิมพ์เล็ก) และหาด้วย identity_hash แทน
             const [existingCase] = await connection.query(
                 "SELECT id FROM mastercases WHERE identity_hash = ? AND clinicType = ? AND status = 'Open' LIMIT 1", 
                 [hashIdentity, clinicType] 
@@ -194,7 +246,6 @@ router.post('/forms/:id/submit', async (req, res) => {
             if (existingCase.length > 0) {
                 masterCaseId = existingCase[0].id; 
             } else {
-                // บันทึกตัวเข้ารหัส(AES) ไว้ที่ identityValue และตัวค้นหาไว้ที่ identity_hash
                 const [newCase] = await connection.query(
                     "INSERT INTO mastercases (identityValue, identity_hash, clinicType, status, currentStage) VALUES (?, ?, ?, 'Open', 'Registered')",
                     [encIdentity, hashIdentity, clinicType]
@@ -205,7 +256,6 @@ router.post('/forms/:id/submit', async (req, res) => {
 
         // โคลน summaryData เพื่อนำไปเข้ารหัส
         const dbSummary = JSON.parse(JSON.stringify(summaryData || {}));
-        // ... (โค้ดเข้ารหัส summaryData ตามปกติ) ...
         
         if (dbSummary.display_name && dbSummary.display_name !== '-') dbSummary.display_name = encrypt(dbSummary.display_name);
         if (dbSummary.display_phone && dbSummary.display_phone !== '-') dbSummary.display_phone = encrypt(dbSummary.display_phone);
@@ -261,12 +311,11 @@ router.post('/forms/:id/submit', async (req, res) => {
                 const message = [
                     `🚨 <b>แจ้งเตือนเคสเสี่ยงสูง!</b>`,
                     `📋 <b>แบบประเมิน:</b> ${stripHtml(formRows[0]?.title || `ฟอร์ม #${formId}`)}`,
-                    `🔗 Case ID: CASE-${String(responseId).padStart(4, '0')}`
+                    `🔗 Case ID: CASE-${String(responseId).padStart(4, '0')}`, // ✅ แก้ไขจุลภาคที่ตกหล่น
                     `👤 <b>ชื่อ:</b> ${stripHtml(summaryData?.display_name) || '-'}`,
                     `📞 <b>เบอร์ติดต่อ:</b> <a href="tel:${cleanPhone}">${phoneStr}</a>`,
                 ].join('\n');
 
-                // 🟢 ดึง URL จาก .env มาต่อกับ Path 
                 const frontendBaseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
                 const replyMarkup = {
@@ -274,7 +323,6 @@ router.post('/forms/:id/submit', async (req, res) => {
                         [
                             { 
                                 text: "🌐 เปิดดูข้อมูลในระบบ", 
-                                // 🟢 ใช้ Template Literal ต่อสตริง URL
                                 url: `${frontendBaseUrl}/admin/risk-cases` 
                             } 
                         ]
@@ -296,11 +344,16 @@ router.post('/forms/:id/submit', async (req, res) => {
     }
 });
 
-// 11. ดึงคำตอบทั้งหมด (Dashboard ฝั่งแอดมิน - 🟢 ถอดรหัส)
+// 11. ดึงคำตอบทั้งหมด (Dashboard ฝั่งแอดมิน - 🟢 ถอดรหัส & เพิ่ม Pagination)
 router.get('/forms/:id/responses', async (req, res) => {
     try {
+        // 🟢 เพิ่มระบบแบ่งหน้า (Pagination) เพื่อป้องกันเซิร์ฟเวอร์โหลดหนักเวลาคนตอบ 4,000+ คน
+        const limit = parseInt(req.query.limit) || 100; // กำหนดให้ดึงครั้งละ 100 รายการ
+        const offset = parseInt(req.query.offset) || 0;
+
         const [rows] = await db.query(
-            "SELECT * FROM form_responses WHERE form_id = ? ORDER BY submitted_at DESC", [req.params.id]
+            "SELECT * FROM form_responses WHERE form_id = ? ORDER BY submitted_at DESC LIMIT ? OFFSET ?", 
+            [req.params.id, limit, offset]
         );
         
         const decryptedRows = rows.map(r => {
@@ -379,7 +432,7 @@ router.post('/forms/:id/duplicate', async (req, res) => {
                 originalForm.image || null,     
                 'draft',             
                 originalForm.clinic_type || 'general',
-                originalForm.form_type || 'Registration', // 🟢 คัดลอกประเภทฟอร์มมาด้วย
+                originalForm.form_type || 'Registration',
                 originalForm.publish_start_date || null,
                 originalForm.publish_end_date || null
             ]

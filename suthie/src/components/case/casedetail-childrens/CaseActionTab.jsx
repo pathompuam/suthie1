@@ -6,7 +6,7 @@ import Swal from 'sweetalert2';
 export default function CaseActionTab(props) {
 
   const {
-    masterCaseInfo, selectedStaff, setSelectedStaff, staffList, customStaff, setCustomStaff,
+    masterCaseInfo, selectedStaff, setSelectedStaff, staffOptions, setStaffOptions, isManagingStaff, setIsManagingStaff, newStaffName, setNewStaffName, handleAddStaff, handleDeleteStaff,
     isManagingStatus, setIsManagingStatus, status, setStatus, statusOptions, handleDeleteStatus,
     newStatusName, setNewStatusName, handleAddStatus, formRules, showSubMetrics, setShowSubMetrics,
     dynamicRisks, scoreResults, editingRiskId, setEditingRiskId, tempRiskChange, setTempRiskChange,
@@ -35,59 +35,6 @@ export default function CaseActionTab(props) {
       current = allQuestions.find(it => it.id === parentId);
     }
     return level;
-  };
-
-  const handleFillData = () => {
-    if (!activeTemplate?.id || !activeTemplate?.questions) {
-      return Swal.fire('แจ้งเตือน', 'กรุณาเลือกชุดคำถามก่อนดึงข้อมูล', 'warning');
-    }
-    if (!groupedLogs) return;
-
-    const allLogs = Object.values(groupedLogs).flat();
-    const lastLog = allLogs
-      .filter(log => log.detail && log.detail.includes(`[สรุป LSM] ${activeTemplate.label}`))
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-
-    if (lastLog) {
-      const detailText = lastLog.detail;
-      const extractedAnswers = {};
-      let currentSearchPos = 0; 
-
-      activeTemplate.questions.forEach((q, i) => {
-        const escapedTitle = q.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const searchArea = detailText.substring(currentSearchPos);
-        const lineRegex = new RegExp(`${escapedTitle}[^\\n]*`, 'i');
-        const match = searchArea.match(lineRegex);
-
-        if (match) {
-          currentSearchPos += match.index + match[0].length;
-          let lineText = match[0].trim();
-          const amtMatch = lineText.match(/\(จำนวน:\s*([^)]+)\)/);
-          if (amtMatch) {
-            const rawAmt = amtMatch[1].trim(); 
-            const digitMatch = rawAmt.match(/^\d+(\.\d+)?/); 
-            if (digitMatch) {
-              extractedAnswers[`amt-${i}`] = digitMatch[0];
-            }
-            lineText = lineText.replace(/\(จำนวน:[^)]+\)/, '').trim();
-          }
-          let finalAnswer = lineText
-            .replace(new RegExp(`.*${escapedTitle}\\s*[:\\-]?\\s*`, 'i'), '')
-            .trim();
-          extractedAnswers[i] = (finalAnswer === '-' || !finalAnswer) ? '' : finalAnswer;
-        }
-
-        const noteRegex = new RegExp(`${escapedTitle}[\\s\\S]*?↳ หมายเหตุ:\\s*([^\\n]*)`, 'i');
-        const noteMatch = detailText.match(noteRegex);
-        if (noteMatch && noteMatch[1]) {
-          extractedAnswers[`note-${i}`] = noteMatch[1].trim();
-        }
-      });
-      setTemplateAnswers(extractedAnswers);
-      Swal.fire({ icon: 'success', title: 'ดึงข้อมูลสำเร็จ', timer: 1500, showConfirmButton: false });
-    } else {
-      Swal.fire('ไม่พบประวัติ', 'ไม่พบการบันทึกข้อมูลภายใต้หัวข้อนี้', 'info');
-    }
   };
 
   const templateDisplayNums = React.useMemo(() => {
@@ -122,17 +69,65 @@ export default function CaseActionTab(props) {
       <div className="cdm-management-box" style={{ opacity: masterCaseInfo?.status === 'Closed' ? 0.5 : 1, pointerEvents: masterCaseInfo?.status === 'Closed' ? 'none' : 'auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', alignItems: 'start' }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div className="cdm-status-header-row">
-              <label className="cdm-form-label">ผู้รับผิดชอบ</label>
-              <div style={{ height: '24px' }}></div>
-            </div>
-            <select className="cdm-form-input" value={selectedStaff} onChange={(e) => setSelectedStaff(e.target.value)}>
-              {staffList.map((s, i) => <option key={i} value={s}>{s}</option>)}
-            </select>
-            {selectedStaff === "พิมพ์ชื่อเอง..." && (
-              <input type="text" className="cdm-form-input" style={{ marginTop: '8px' }} placeholder="ระบุชื่อ..." value={customStaff} onChange={(e) => setCustomStaff(e.target.value)} />
-            )}
+  <div className="cdm-status-header-row">
+    <label className="cdm-form-label">ผู้รับผิดชอบ</label>
+    <button type="button" className="cdm-text-btn-manage" onClick={() => setIsManagingStaff(!isManagingStaff)}>
+      <FaCog /> {isManagingStaff ? "ปิด" : "จัดการ"}
+    </button>
+  </div>
+
+  {!isManagingStaff ? (
+    <select className="cdm-form-input" value={selectedStaff} onChange={(e) => setSelectedStaff(e.target.value)}>
+      {staffOptions.length === 0 && <option value="">ไม่มีข้อมูล</option>}
+      {staffOptions.map((opt, i) => (
+        <option key={i} value={opt}>{opt}</option>
+      ))}
+    </select>
+  ) : (
+    <div className="cdm-service-manage-box">
+      <div className="cdm-service-list">
+        {staffOptions.map((opt, i) => (
+          <div key={i} className="cdm-service-item">
+            <span>{opt}</span>
+            <button
+              type="button"
+              className="cdm-action-icon delete"
+              onClick={() => {
+  Swal.fire({
+    title: 'ยืนยันการลบ?',
+    text: `ต้องการลบ ${opt} ใช่หรือไม่`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'ลบ',
+    cancelButtonText: 'ยกเลิก',
+    confirmButtonColor: '#ef4444'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      handleDeleteStaff(opt);
+    }
+  });
+}}
+            >
+              <FaTrashAlt />
+            </button>
           </div>
+        ))}
+      </div>
+
+      <div className="cdm-service-add-row">
+        <input
+          type="text"
+          value={newStaffName}
+          onChange={(e) => setNewStaffName(e.target.value)}
+          placeholder="เพิ่มผู้รับผิดชอบ..."
+        />
+        <button type="button" onClick={handleAddStaff}>
+          <FaPlus />
+        </button>
+      </div>
+    </div>
+  )}
+</div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div className="cdm-status-header-row">
               <label className="cdm-form-label">สถานะปัจจุบัน</label>
@@ -401,27 +396,6 @@ export default function CaseActionTab(props) {
                 </span>
               </h4>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-                {/* 🟢 เพิ่มปุ่มดึงข้อมูลล่าสุด ตรงนี้ */}
-                <button
-                  type="button"
-                  onClick={handleFillData}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    padding: '6px 12px',
-                    background: '#eff6ff',
-                    color: '#2563eb',
-                    border: '1px solid #bfdbfe',
-                    borderRadius: '8px',
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    cursor: 'pointer'
-                  }}
-                  title="ใช้ข้อมูลจากการบันทึกครั้งล่าสุด"
-                >
-                  <FaSave /> ดึงข้อมูลล่าสุด
-                </button>
-              </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
                 <div className="cdm-session-input-wrapper">
                   <span className="cdm-session-label">ครั้งที่</span>

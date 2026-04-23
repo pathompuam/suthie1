@@ -4,6 +4,9 @@ const router = express.Router();
 const db = require('../config/db');
 // 🟢 นำเข้าระบบเข้ารหัส
 const { encrypt, decrypt, hmacHash } = require('../utils/encryption');
+const NodeCache = require('node-cache');
+// ตั้งค่าให้จำไว้ 5 นาที (300 วินาที) ข้อมูลพวกนี้เปลี่ยนไม่บ่อย
+const myCache = new NodeCache({ stdTTL: 300 });
 
 // Helper ถอดรหัส
 const safeDecrypt = (val) => decrypt(val) || val;
@@ -90,13 +93,17 @@ router.post('/appointments', async (req, res) => {
 
 router.get('/appointments', async (req, res) => {
   try {
+    // 🟢 บังคับจำกัดการดึงข้อมูลเพื่อป้องกันเซิร์ฟเวอร์ค้าง
+    const limit = parseInt(req.query.limit) || 100;
+    const offset = parseInt(req.query.offset) || 0;
+
     const [rows] = await db.query(`
       SELECT a.*, r.form_id, r.identity_value, r.summary_data, r.status, r.risk_level, r.submitted_at, s.name AS service_name
       FROM appointments a
       LEFT JOIN form_responses r ON a.case_id = r.id
       LEFT JOIN service_types s ON a.service_id = s.id
       ORDER BY a.appointment_date ASC
-    `);
+    `, [limit, offset]); // 🟢 ใส่ limit, offset ตรงนี้
     
     // ถอดรหัสตอนดึงนัดหมาย
     const decryptedRows = rows.map(r => {
@@ -265,7 +272,18 @@ router.get('/history/:identity', async (req, res) => {
 // 3.5 SERVICES
 // ==========================================
 router.get('/services', async (req, res) => {
-  try { const [rows] = await db.query("SELECT * FROM service_types ORDER BY id ASC"); res.json(rows); } 
+  try { 
+    // 🟢 1. เช็คว่ามีใน Cache ไหม ถ้ามีให้ส่งกลับทันที (ไม่กวน DB)
+    if (myCache.has('services')) {
+      return res.json(myCache.get('services'));
+    }
+
+    const [rows] = await db.query("SELECT * FROM service_types ORDER BY id ASC"); 
+    
+    // 🟢 2. ถ้าไม่มีให้ดึงจาก DB แล้วจำใส่ Cache ไว้
+    myCache.set('services', rows);
+    res.json(rows); 
+  } 
   catch (err) { res.status(500).json({ message: "Error" }); }
 });
 
@@ -273,17 +291,18 @@ router.post('/services', async (req, res) => {
   try {
     const { name } = req.body;
     const [result] = await db.query("INSERT INTO service_types (name, color) VALUES (?, '#2d7d81')", [name]);
+    myCache.del('services');
     res.status(201).json({ id: result.insertId, message: "Created" });
   } catch (err) { res.status(500).json({ message: "Error" }); }
 });
 
 router.put('/services/:id', async (req, res) => {
-  try { await db.query("UPDATE service_types SET name = ? WHERE id = ?", [req.body.name, req.params.id]); res.json({ message: "Updated" }); } 
+  try { await db.query("UPDATE service_types SET name = ? WHERE id = ?", [req.body.name, req.params.id]); myCache.del('services'); res.json({ message: "Updated" }); } 
   catch (err) { res.status(500).json({ message: "Error" }); }
 });
 
 router.delete('/services/:id', async (req, res) => {
-  try { await db.query("DELETE FROM service_types WHERE id = ?", [req.params.id]); res.json({ message: "Deleted" }); } 
+  try { await db.query("DELETE FROM service_types WHERE id = ?", [req.params.id]); myCache.del('services'); res.json({ message: "Deleted" }); } 
   catch (err) { res.status(500).json({ message: "Error" }); }
 });
 
@@ -294,7 +313,13 @@ router.delete('/services/:id', async (req, res) => {
 const getStatusesHandler = async (req, res) => {
     try {
         const clinic_type = req.query.clinic_type || req.query.clinic || 'general';
+        const cacheKey = `statuses_${clinic_type}`; // 🟢 สร้างชื่อ Key แยกตามคลินิก
         
+        // 🟢 1. เช็ค Cache ก่อน
+        if (myCache.has(cacheKey)) {
+            return res.json(myCache.get(cacheKey));
+        }
+
         // 🟢 ดึงสถานะของคลินิกนี้ "รวมถึง" สถานะพื้นฐาน (all หรือ NULL) เพื่อไม่ให้สถานะหลักหาย
         let sql = "SELECT * FROM case_statuses WHERE is_active = 1 AND (clinic_type = ? OR clinic_type = 'all' OR clinic_type IS NULL) ORDER BY id ASC";
         let [rows] = await db.query(sql, [clinic_type]);
@@ -328,6 +353,8 @@ const getStatusesHandler = async (req, res) => {
             }
             [rows] = await db.query(sql, [clinic_type]);
         }
+        // 🟢 2. เซฟลง Cache
+        myCache.set(cacheKey, rows);
         res.json(rows);
     } catch (err) {
         console.error("GET Statuses Error:", err.message);

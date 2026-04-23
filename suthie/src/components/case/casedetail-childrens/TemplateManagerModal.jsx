@@ -15,7 +15,7 @@ export default function TemplateManagerModal({ clinicType, onClose, onRefresh, s
       const res = await getNoteTemplates(clinicType);
       setTemplates(res.data);
     } catch (err) {
-      console.error(err);
+      
     }
   }, [clinicType]);
 

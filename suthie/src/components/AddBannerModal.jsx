@@ -3,7 +3,7 @@ import Cropper from "react-easy-crop";
 import { FiPlus } from "react-icons/fi";
 import "./AddBannerModal.css";
 
-// 🟢 ฟังก์ชันครอปรูปภาพ (แก้ปัญหาเบราว์เซอร์คำนวณพิกัดผิดเวลาไฟล์ใหญ่)
+// ฟังก์ชันครอปรูปภาพ 
 const getCroppedImg = async (imageSrc, pixelCrop) => {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -11,7 +11,6 @@ const getCroppedImg = async (imageSrc, pixelCrop) => {
 
     image.onload = () => {
       try {
-        // ขั้นตอนที่ 1: สร้าง Canvas ชั่วคราว เพื่อ "ตัด" รูปออกมาตามพิกัดจริงก่อน
         const cropCanvas = document.createElement("canvas");
         const cropCtx = cropCanvas.getContext("2d");
 
@@ -97,7 +96,7 @@ export default function AddBannerModal({ onClose, onSave }) {
       setCroppedImage(cropped);
       setIsCropping(false);
     } catch (e) {
-      console.error("Crop error:", e);
+      
       alert("เกิดข้อผิดพลาดในการประมวลผลรูปภาพ กรุณาลองใหม่อีกครั้ง");
     }
   };

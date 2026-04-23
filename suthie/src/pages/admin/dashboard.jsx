@@ -137,7 +137,7 @@ export default function Dashboard() {
           setMasterCaseStats(prev => ({ ...prev, ...res.data }));
         }
       } catch (err) {
-        console.error("Failed to load master case stats:", err);
+        
       }
     };
     fetchMasterCaseStats();
@@ -168,7 +168,7 @@ export default function Dashboard() {
             }
           }
         }
-      } catch (err) { console.error(err); }
+      } catch (err) {  }
     };
     loadInitialData();
   }, []);
@@ -205,7 +205,7 @@ export default function Dashboard() {
           })
         );
         setChartsByForm(prev => ({ ...prev, [selectedFormId]: freshCharts }));
-      } catch (err) { console.error("refetchCharts error:", err); }
+      } catch (err) {  }
     };
     refetchCharts();
   }, [startDate, endDate, selectedFormId, charts]);
@@ -241,7 +241,7 @@ export default function Dashboard() {
         const res = await getRecentCases(selectedClinic);
         setCases(res.data);
       } catch (err) {
-        console.error(err);
+        
         setCases([]);
       } finally {
         setIsLoading(false);
@@ -297,7 +297,7 @@ export default function Dashboard() {
       setChartsByForm(updatedChartsByForm);
       setIsModalOpen(false);
       await saveDashboardSettings({ formId: selectedFormId, charts: updatedChartsByForm });
-    } catch (err) { console.error(err); }
+    } catch (err) { }
   }, [chartsByForm, selectedFormId, startDate, endDate]);
 
   const handleDragEnd = useCallback(async (event) => {
@@ -693,7 +693,7 @@ const SortableChart = React.memo(function SortableChart({ id, title, type, quest
             else if (question === "exercise_1774859637605") resultText = summary.exercise_result_text;
             else if (question === "emotion_1774859637605") resultText = summary.emotion_result_text;
           }
-        } catch (e) { console.error(e); }
+        } catch (e) { }
       }
 
       // 🟢 3. กรณีไม่มีคะแนนสรุป ให้ดึงจากคำตอบดิบ

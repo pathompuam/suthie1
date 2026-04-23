@@ -49,9 +49,34 @@ export default function CaseDetailModal({ data, onClose, onCaseUpdated, onCaseDe
   const [savedStatus, setSavedStatus] = useState(data?.status || "");
   const [status, setStatus] = useState(savedStatus);
 
-  const [staffList] = useState(["นพ.ใจดี รักษา", "อ.ดร.วิชัย สมศรี", "นักจิตวิทยา A", "พิมพ์ชื่อเอง..."]);
-  const [selectedStaff, setSelectedStaff] = useState(staffList[0]);
+  const [staffOptions, setStaffOptions] = useState(() => {
+    const saved = localStorage.getItem("staffOptions");
+    return saved
+      ? JSON.parse(saved)
+      : ["นพ.ใจดี รักษา", "อ.ดร.วิชัย สมศรี", "นักจิตวิทยา A", "พิมพ์ชื่อเอง..."];
+  });
+  const [isManagingStaff, setIsManagingStaff] = useState(false);
+  const [newStaffName, setNewStaffName] = useState("");
+  const [selectedStaff, setSelectedStaff] = useState("");
   const [customStaff, setCustomStaff] = useState("");
+
+  useEffect(() => {
+    if (staffOptions.length > 0 && !selectedStaff) {
+      setSelectedStaff(staffOptions[0]);
+    }
+  }, [staffOptions]);
+
+  // save ทุกครั้งที่ staffOptions เปลี่ยน
+  useEffect(() => {
+    localStorage.setItem("staffOptions", JSON.stringify(staffOptions));
+  }, [staffOptions]);
+
+  // กัน selected ค้าง
+  useEffect(() => {
+    if (!staffOptions.includes(selectedStaff)) {
+      setSelectedStaff("");
+    }
+  }, [staffOptions]);
 
   const [savedRisk, setSavedRisk] = useState(defaultRisk);
   const [riskLevel, setRiskLevel] = useState(savedRisk);
@@ -114,6 +139,17 @@ export default function CaseDetailModal({ data, onClose, onCaseUpdated, onCaseDe
     return journeyResponses.find(r => r.id === viewingResponseId) || data;
   }, [viewingResponseId, data, journeyResponses]);
 
+  const handleAddStaff = () => {
+    if (!newStaffName.trim()) return;
+
+    setStaffOptions(prev => [...prev, newStaffName]);
+    setNewStaffName("");
+  };
+
+  const handleDeleteStaff = (name) => {
+    setStaffOptions(prev => prev.filter(s => s !== name));
+  };
+
   const leftPanelSummary = viewedResponse?.summary_data || {};
   const leftPanelRawAnswers = leftPanelSummary.raw_answers || {};
   const leftPanelScoreResults = useMemo(() => leftPanelSummary.score_results || [], [leftPanelSummary.score_results]);
@@ -139,7 +175,7 @@ export default function CaseDetailModal({ data, onClose, onCaseUpdated, onCaseDe
   }, [activeTab]);
 
   useEffect(() => {
-    getForms('latest').then(res => setFormsList(res.data)).catch(console.error);
+    getForms('latest').then(res => setFormsList(res.data));
     if (data?.master_case_id) {
       getMasterCasesById(data.master_case_id).then(res => {
         setJourneyResponses(res.data.responses || []);
@@ -206,7 +242,7 @@ export default function CaseDetailModal({ data, onClose, onCaseUpdated, onCaseDe
         const scoredQs = q.filter(x => x.isScored);
         const rules = scoredQs.map(x => ({ id: x.id, title: x.title, rules: x.scoringRules || [] }));
         setFormRules(rules);
-      }).catch(console.error);
+      });
     }
   }, [viewedResponse?.form_id, viewedResponse?.clinic_type, data?.form_id, data?.clinic_type]);
 
@@ -258,7 +294,7 @@ export default function CaseDetailModal({ data, onClose, onCaseUpdated, onCaseDe
       const apptRes = await getCaseAppointments(targetId, targetType);
       setAppointmentNo(apptRes.data.length + 1);
       await fetchServicesList();
-    } catch (err) { console.error(err); }
+    } catch (err) { }
   }, [data?.id, masterCaseInfo, fetchServicesList]);
 
   useEffect(() => { fetchData(); fetchStatusList(); }, [fetchData, fetchStatusList]);
@@ -546,15 +582,19 @@ export default function CaseDetailModal({ data, onClose, onCaseUpdated, onCaseDe
   const finalizeTemplate = () => {
     if (!activeTemplate) return;
     const sessionText = templateSessionNo ? ` ครั้งที่ ${templateSessionNo}` : "";
-    let finalNote = `📌 [${sessionText}] ${activeTemplate.label}\n`;
+    let finalNote = `📌 [สรุป LSM${sessionText}] ${activeTemplate.label}\n`;
 
-    const numbers = {}; const childCounts = {}; let mainCount = 0;
-    activeTemplate.questions.forEach(q => {
-      if (!q.parentId) { mainCount++; numbers[q.id] = String(mainCount); }
-      else {
-        if (!childCounts[q.parentId]) childCounts[q.parentId] = 0;
-        childCounts[q.parentId]++;
-        numbers[q.id] = `${numbers[q.parentId] || "0"}.${childCounts[q.parentId]}`;
+    const numbers = {};
+    const childCounts = {};
+    let mainCount = 0;
+
+    activeTemplate.questions.forEach((q) => {
+      if (q.parentId) {
+        childCounts[q.parentId] = (childCounts[q.parentId] || 0) + 1;
+        numbers[q.id] = `${numbers[q.parentId]}.${childCounts[q.parentId]}`;
+      } else {
+        mainCount++;
+        numbers[q.id] = mainCount.toString();
       }
     });
     activeTemplate.questions.forEach((q, i) => {
@@ -564,27 +604,22 @@ export default function CaseDetailModal({ data, onClose, onCaseUpdated, onCaseDe
       const displayNum = numbers[q.id] || "";
       const level = displayNum.split('.').length - 1;
       const indent = "   ".repeat(level);
-      // 1. สร้างส่วนของบรรทัดหลัก
+
       let line = `${indent}${displayNum}. ${q.title}`;
       if (q.type !== 'header') line += ` : ${ans}`;
-      if (amt) line += ` (จำนวน: ${amt}${q.amountUnit ? ` ${q.amountUnit}` : ''})`;
 
-      // 2. สร้างส่วนของหมายเหตุแยกออกมา (เช็คทั้งค่าว่างและค่าเริ่มต้น)
+      if (amt) {
+        line += ` (จำนวน: ${amt}${q.amountUnit ? ` ${q.amountUnit}` : ''})`;
+      }
       let notePart = "";
-
-      // 🟢 หัวใจสำคัญ: เช็คว่า note ที่กรอกมา "ไม่เท่ากับ" ค่าเริ่มต้นที่ตั้งไว้ตอนสร้าง Template
-      const isDefaultNote = note && q.defaultComment && note.trim() === q.defaultComment.trim();
-      const isEmptyNote = !note || note.trim() === "" || note.trim() === "-";
-
-      if (!isEmptyNote && !isDefaultNote) {
+      if (note && note.trim() !== "" && note.trim() !== "-") {
         notePart = `\n${indent}   ↳ หมายเหตุ: ${note.trim()}`;
       }
 
-      // 3. รวมบรรทัดหลักกับหมายเหตุ (ถ้ามี)
       finalNote += line + notePart + "\n";
     });
-    setStaffNote(prev => prev + (prev ? "\n" : "") + finalNote);
 
+    setStaffNote(prev => prev + (prev ? "\n" : "") + finalNote);
     setActiveTemplate(null);
     setTemplateAnswers({});
   };
@@ -724,7 +759,7 @@ export default function CaseDetailModal({ data, onClose, onCaseUpdated, onCaseDe
                 )}
                 {activeTab === 'action' && (
                   <CaseActionTab
-                    masterCaseInfo={masterCaseInfo} selectedStaff={selectedStaff} setSelectedStaff={setSelectedStaff} staffList={staffList} customStaff={customStaff} setCustomStaff={setCustomStaff}
+                    masterCaseInfo={masterCaseInfo} selectedStaff={selectedStaff} setSelectedStaff={setSelectedStaff} staffList={staffOptions} customStaff={customStaff} setCustomStaff={setCustomStaff}
                     isManagingStatus={isManagingStatus} setIsManagingStatus={setIsManagingStatus} status={status} setStatus={setStatus} statusOptions={statusOptions}
                     handleDeleteStatus={handleDeleteStatus} newStatusName={newStatusName} setNewStatusName={setNewStatusName} handleAddStatus={handleAddStatus} formRules={formRules} showSubMetrics={showSubMetrics} setShowSubMetrics={setShowSubMetrics}
                     dynamicRisks={dynamicRisks} scoreResults={scoreResults} editingRiskId={editingRiskId} setEditingRiskId={setEditingRiskId}
@@ -741,7 +776,14 @@ export default function CaseDetailModal({ data, onClose, onCaseUpdated, onCaseDe
                     handleEditService={handleEditService} handleDeleteService={handleDeleteService} newServiceName={newServiceName} setNewServiceName={setNewServiceName}
                     handleAddService={handleAddService} handleSaveAll={handleSaveAll} stripHtml={stripHtml}
                     clinicalData={clinicalData} setClinicalData={setClinicalData} templateSessionNo={templateSessionNo} setTemplateSessionNo={setTemplateSessionNo}
-                    groupedLogs={groupedLogs}
+                    groupedLogs={groupedLogs} staffOptions={staffOptions}
+                    setStaffOptions={setStaffOptions}
+                    isManagingStaff={isManagingStaff}
+                    setIsManagingStaff={setIsManagingStaff}
+                    newStaffName={newStaffName}
+                    setNewStaffName={setNewStaffName}
+                    handleAddStaff={handleAddStaff}
+                    handleDeleteStaff={handleDeleteStaff}
                   />
                 )}
                 {activeTab === 'history' && (<CaseHistoryTab groupedLogs={groupedLogs} renderLogDetail={renderLogDetail} />)}

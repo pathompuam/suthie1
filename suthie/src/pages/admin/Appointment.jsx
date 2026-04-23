@@ -151,7 +151,7 @@ export default function Appointment() {
       setAppointments(allAppointments);
 
     } catch (error) {
-      console.error("Failed to fetch appointments", error);
+    
       setAppointments([]);
     } finally {
       setIsLoading(false);
@@ -195,7 +195,7 @@ export default function Appointment() {
       const res = await getForms("latest");
       setForms(res.data);
     } catch (err) {
-      console.error(err);
+      
     }
   };
 
@@ -300,7 +300,7 @@ export default function Appointment() {
         return a;
       }));
     } catch (err) {
-      console.error(err);
+      
       alert('เกิดข้อผิดพลาดในการอัปเดตสถานะคิว');
     }
   };

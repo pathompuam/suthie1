@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { FiClock, FiLogIn, FiChevronLeft, FiChevronRight, FiCheckCircle, FiShield, FiHeart, FiPhoneCall } from "react-icons/fi";
 import "./SutLanding2.css";
 
@@ -12,10 +12,11 @@ import behaviorLogo from "../../assets/clinic-behavior.png";
 import teenBg from "../../assets/clinic-teenager.jpg";
 import stiBg from "../../assets/clinic-sti.jpg";
 import behaviorBg from "../../assets/clinic-behavior.jpg";
-import { getForms, getFormSubmissionCount, getBanners } from "../../services/api";
+import { formCache } from "../../services/cache";
+// ✅ แก้ไขบรรทัดนี้ให้ดึง api เข้ามาใช้งานด้วย
+import api, { getForms, getBanners } from "../../services/api";
 
 const SLIDE_INTERVAL = 6000;
-const POLL_INTERVAL = 30000;
 const CARD_THEMES = ["sut2-card--blue", "sut2-card--pink", "sut2-card--green"];
 const CLINICS = [
   { id: "teenager", name: "คลินิกวัยรุ่น", image: teenLogo, bg: teenBg },
@@ -91,8 +92,6 @@ export default function SutLanding2() {
   const [selectedClinic, setSelectedClinic] = useState(null);
   const [animatingClinic, setAnimatingClinic] = useState(null);
   const [animationStage, setAnimationStage] = useState("idle");
-  const [winWidth, setWinWidth] = useState(window.innerWidth);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
   const pollRef = useRef(null);
 
@@ -101,8 +100,7 @@ export default function SutLanding2() {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-      setWinWidth(window.innerWidth);
+      // ✅ ใช้เพื่อคำนวณ card width สำหรับ scrollBy
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -125,11 +123,21 @@ export default function SutLanding2() {
   }, []);
 
   useEffect(() => {
-    getBanners().then(res => setSlides(res.data.map(b => ({ image: b.image, alt: b.filename })))).catch(console.error);
+    getBanners().then(res => setSlides(res.data.map(b => ({ image: b.image, alt: b.filename }))));
+    
+    // ✅ ตรวจ cache ก่อน
+    const cachedForms = formCache.get('forms');
+    if (cachedForms) {
+      setForms(cachedForms);
+      setLoading(false);
+      return;
+    }
+
+    // ถ้าไม่มี ค่อย fetch
     getForms("lastOpened").then(res => {
-      const now = new Date();
       const activeForms = res.data.filter(f => {
         if (!f.status || f.status !== 'published') return false;
+        const now = new Date();
         const start = f.publish_start_date ? new Date(f.publish_start_date) : null;
         const end = f.publish_end_date ? new Date(f.publish_end_date) : null;
         if (start && now < start) return false;
@@ -137,13 +145,22 @@ export default function SutLanding2() {
         return true;
       });
       setForms([...activeForms].reverse());
+      
+      // ✅ บันทึก cache
+      formCache.set('forms', [...activeForms].reverse());
       setLoading(false);
-    }).catch(err => { console.error(err); setLoading(false); });
-  }, []);
+    }).catch(() => { 
+      setForms([]); 
+      setLoading(false);
+  });
+}, []);
 
-  const filteredForms = selectedClinic
-    ? forms.filter(f => (f.clinic_type || "general") === selectedClinic)
-    : [];
+  // ✅ ใช้ useMemo เพื่อหลีกเลี่ยง dependency warning
+  const filteredForms = useMemo(() => 
+    selectedClinic
+      ? forms.filter(f => (f.clinic_type || "general") === selectedClinic)
+      : []
+  , [selectedClinic, forms]);
 
   useEffect(() => {
     if (activeIdx >= filteredForms.length && filteredForms.length > 0) {
@@ -194,20 +211,41 @@ export default function SutLanding2() {
 
   const fetchAllCounts = useCallback(async (formList) => {
     if (!formList.length) return;
-    const results = await Promise.allSettled(formList.map(f => getFormSubmissionCount(f.id)));
-    const map = {};
-    formList.forEach((f, i) => {
-      map[f.id] = results[i].status === "fulfilled" ? (results[i].value?.data?.count ?? 0) : 0;
-    });
-    setCounts(map);
+    
+    try {
+      // ✅ เปลี่ยนจาก axios.post เป็น api.post
+      // ✅ เปลี่ยน Path จาก '/api/forms/counts' เป็น '/counts' (เพราะใน api.js มี baseURL ครอบไว้แล้ว)
+      const response = await api.post('/counts', {
+        formIds: formList.map(f => f.id)
+      });
+      
+      setCounts(response.data.data);
+    } catch (err) {
+    
+    }
   }, []);
 
+  const [isInViewport, setIsInViewport] = useState(false);
+
   useEffect(() => {
-    if (!forms.length) return;
+    if (!forms.length || !isInViewport) return;  // ✅ ตรวจ viewport ก่อน
+  
     fetchAllCounts(forms);
-    pollRef.current = setInterval(() => fetchAllCounts(forms), POLL_INTERVAL);
+    pollRef.current = setInterval(() => fetchAllCounts(forms), 60000); // ✅ ลด เป็น 60 วินาที
     return () => clearInterval(pollRef.current);
-  }, [forms, fetchAllCounts]);
+  }, [forms, fetchAllCounts, isInViewport]);
+
+  // ✅ เพิ่ม Intersection Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsInViewport(entry.isIntersecting);
+    });
+    
+    const section = document.querySelector('.sut2-3d-section');
+    if (section) observer.observe(section);
+    
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="sut2-page">

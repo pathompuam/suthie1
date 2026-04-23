@@ -55,7 +55,7 @@ export default function RolesPermissions() {
         const res = await getRoles();
         setRoles(res.data);
         if (res.data.length > 0) setSelectedRole(res.data[0].id);
-      } catch (err) { console.error(err); }
+      } catch (err) { setRoles([]);}
     };
     fetchRoles();
   }, []);
@@ -76,7 +76,7 @@ export default function RolesPermissions() {
           };
         });
         setPermissions(formatted);
-      } catch (err) { console.error(err); }
+      } catch (err) { setPermissions({}); }
     };
     fetchPermissions();
   }, [selectedRole]);
@@ -138,7 +138,6 @@ export default function RolesPermissions() {
           setSelectedRole(updatedRoles.length > 0 ? updatedRoles[0].id : null);
         }
       } catch (err) {
-        console.error(err);
         alert("ไม่สามารถลบได้: บทบาทนี้อาจถูกใช้งานโดยผู้ใช้ในระบบ หรือเกิดข้อผิดพลาดที่เซิร์ฟเวอร์");
       }
     }

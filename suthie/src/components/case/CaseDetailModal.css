@@ -160,10 +160,51 @@ textarea.cdm-form-input { resize: vertical; min-height: 80px; height: auto; }
 .cdm-log-detail-highlight { display: inline-block; padding: 6px 10px; border-radius: 6px; font-size: 13.5px; margin-top: 4px; font-weight: 500; }
 .cdm-log-status { background: #eff6ff; border-left: 3px solid #3b82f6; color: #1e40af; }
 .cdm-log-risk { background: #fef2f2; border-left: 3px solid #ef4444; color: #991b1b; }
-/* กล่องประวัติเฉพาะทาง */
-.cdm-log-impression { background: #f0fdf4; border-left: 3px solid #10b981; padding: 12px 14px; border-radius: 0 8px 8px 0; margin: 6px 0; display: flex; flex-direction: column; gap: 6px; }
-.cdm-impression-title { font-size: 13px; font-weight: 700; color: #047857; display: flex; align-items: center; }
-.cdm-impression-text { font-size: 14px; color: #334155; font-style: italic; line-height: 1.5; }
+
+.cdm-hist-date-divider {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding: 10px 0;
+    margin: 20px 0;
+}
+.cdm-hist-date-divider::before,
+.cdm-hist-date-divider svg:not(.cdm-hist-date-badge svg) {
+    display: none !important; 
+}
+
+.cdm-hist-date-badge {
+    font-weight: 700;
+    color: #64748b;
+    font-size: 14px;
+    background: #f8fafc; 
+    padding: 6px 20px;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+.cdm-hist-date-divider:hover .cdm-hist-date-badge {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+.cdm-hist-date-divider.active .cdm-hist-date-badge {
+    color: #007bff;          
+    border-color: #007bff;  
+    background: #f0f7ff;
+    box-shadow: 0 2px 8px rgba(244, 121, 50, 0.1);
+}
+.cdm-hist-date-badge-wrapper {
+   position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #ffffff; 
+    padding: 0 15px;
+}
 /* ===================================================
    🟢 TOGGLE BUTTONS FOR DYNAMIC METRICS
    =================================================== */
@@ -366,8 +407,7 @@ select.cdm-form-input { padding-right: 32px; }
 .cdm-dropdown-menu { min-width: 160px; }
 .cdm-dropdown-item { padding: 10px; font-size: 12px; }
  }
-
- /* ===================================================
+/* ===================================================
    🟢 TEMPLATE & TRACKING REDESIGN (CaseActionTab)
    =================================================== */
 .cdm-tracking-box { background: #ffffff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03); margin-bottom: 20px; }
@@ -389,7 +429,6 @@ select.cdm-form-input { padding-right: 32px; }
   background: #fee2e2; color: #ef4444; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
 .cdm-tpl-close-btn-alt:hover { background: #ef4444; color: white; transform: rotate(90deg); }
 .cdm-tpl-close-btn-alt svg { flex-shrink: 0; }
-
 /* ── Question Rows ── */
 .cdm-q-row { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: border-color 0.2s; }
 .cdm-q-row:hover { border-color: #cbd5e1; }

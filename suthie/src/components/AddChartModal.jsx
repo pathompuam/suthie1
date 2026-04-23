@@ -98,7 +98,7 @@ const AddChartModal = ({ isOpen, onClose, onSave, formId }) => {
             else if (selectedQuestion === "emotion_1774859637605") resultText = summary.emotion_result_text;
           }
         } catch (e) {
-          console.error("JSON Parse Error");
+          
         }
       }
 
@@ -147,8 +147,6 @@ const AddChartModal = ({ isOpen, onClose, onSave, formId }) => {
           res.data ||
           [];
 
-        console.log("Questions Data:", questionsData);
-
         const choiceQuestions = questionsData.filter(q =>
           q.type === "multiple_choice" ||
           q.type === "checkboxes" ||
@@ -160,7 +158,7 @@ const AddChartModal = ({ isOpen, onClose, onSave, formId }) => {
         setQuestions(choiceQuestions);
 
       } catch (err) {
-        console.error("Error loading questions:", err);
+        
         setQuestions([]);
       }
     };
@@ -192,12 +190,9 @@ const AddChartModal = ({ isOpen, onClose, onSave, formId }) => {
         );
         const data = Array.isArray(res.data) ? res.data : res.data.data;
 
-        console.log("API response:", res);
-        console.log("chartData:", data);
-
         setChartData(data || []);
       } catch (err) {
-        console.error("Error loading preview chart:", err);
+        
         setChartData([]);
       }
     };

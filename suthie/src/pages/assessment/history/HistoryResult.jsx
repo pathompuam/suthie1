@@ -16,7 +16,7 @@ import {
   FiEye, FiEyeOff, FiClock,
   FiFileText, FiUser, FiActivity,
   FiMessageSquare, FiCalendar, FiPlusCircle, FiInfo, FiX,
-  FiAlertCircle
+  FiAlertCircle,FiChevronDown, FiChevronUp
 } from 'react-icons/fi';
 
 import { FaChartBar } from 'react-icons/fa';
@@ -24,7 +24,6 @@ import { FaChartBar } from 'react-icons/fa';
 import { CLINIC_INFO, stripHtml, formatDate, getRiskInfo, formatAnswerValue } from './historyUtils';
 import { HeroEditableField, MaskedIdField, EditableAnswerField, EditableField, Toast } from './components/HistoryWidgets';
 
-// 🟢 Component สำหรับจัดการข้อความยาวๆ
 const ExpandableText = ({ text, color }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   let formattedText = text || "";
@@ -38,10 +37,10 @@ const ExpandableText = ({ text, color }) => {
   return (
     <div className="hr-expandable-container">
       <div
-        className="hr-expandable-content"
-        style={{ maxHeight: (isLong && !isExpanded) ? '120px' : 'none' }}
+        className={`hr-expandable-content ${isExpanded ? 'expanded' : 'collapsed'}`}
+        style={{ maxHeight: (isLong && !isExpanded) ? '100px' : 'none' }}
       >
-        <div className="hr-advice-text" style={{ margin: 0 }}>
+        <div className="hr-advice-text" >
           {lines.map((line, idx) => {
             if (!line.trim()) return null;
             const match = line.trim().match(/^(\d+(?:\.\d+)*\.)/);
@@ -62,7 +61,6 @@ const ExpandableText = ({ text, color }) => {
                 marginLeft: `${level * 20}px`,
                 marginTop: isMainHeader && idx > 0 ? '12px' : '4px',
                 fontSize: isMainHeader ? '14px' : '13.5px',
-                display: 'block',
                 lineHeight: '1.5'
               }}>
                 {line.trim()}
@@ -75,11 +73,15 @@ const ExpandableText = ({ text, color }) => {
       {isLong && (
         <button
           type="button"
-          className="hr-advice-toggle-btn"
+          className="hr-advice-toggle-btn-new"
           style={{ color: color || 'var(--theme-green-700)' }}
           onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
         >
-          {isExpanded ? 'ย่อข้อความ ▲' : 'อ่านเพิ่มเติม ▾'}
+          {isExpanded ? (
+            <>ย่อข้อความ <FiChevronUp size={18} /></> 
+          ) : (
+            <>อ่านเพิ่มเติม <FiChevronDown size={18} /></>
+          )}
         </button>
       )}
     </div>

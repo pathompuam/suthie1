@@ -3,13 +3,11 @@ import { FaExchangeAlt, FaStickyNote, FaUserCircle, FaChevronDown, FaChevronUp }
 import { FiCalendar } from "react-icons/fi";
 
 export default function CaseHistoryTab({ groupedLogs, renderLogDetail }) {
-  // 🟢 1. สร้าง State เพื่อเก็บว่าวันที่ไหน "เปิด" อยู่บ้าง (Default ให้เปิดวันแรกสุด)
+ 
   const [expandedDates, setExpandedDates] = useState(() => {
     const dates = Object.keys(groupedLogs);
     return dates.length > 0 ? [dates[0]] : [];
   });
-
-  // 🟢 2. ฟังก์ชันสำหรับสลับการเปิด-ปิด
   const toggleDate = (date) => {
     setExpandedDates(prev =>
       prev.includes(date)
@@ -17,6 +15,13 @@ export default function CaseHistoryTab({ groupedLogs, renderLogDetail }) {
         : [...prev, date]
     );
   };
+  const [expandedLogs, setExpandedLogs] = useState({});
+  const toggleLog = (logId) => {
+    setExpandedLogs(prev => ({
+    ...prev,
+    [logId]: !prev[logId]
+  }));
+};
 
   return (
     <div className="cdm-hist-container">
@@ -35,7 +40,7 @@ export default function CaseHistoryTab({ groupedLogs, renderLogDetail }) {
                 <div className="cdm-hist-date-badge-wrapper">
                   <span className="cdm-hist-date-badge">
                     {dateStr}
-                    <span className="cdm-hist-chevron">
+                    <span style={{ marginLeft: '8px', display: 'inline-flex', alignItems: 'center' }}>
                       {isExpanded
                         ? <FaChevronUp size={12} />
                         : <FaChevronDown size={12}  />
@@ -55,6 +60,7 @@ export default function CaseHistoryTab({ groupedLogs, renderLogDetail }) {
                     } else if (log.type === 'appoint') {
                       IconCmp = FiCalendar; typeLabel = "นัดหมาย"; dotClass = "appoint";
                     }
+                    const isLogExpanded = expandedLogs[log.id];
                     return (
                       <div key={log.id} className="cdm-hist-item">
                         <div className={`cdm-hist-icon ${dotClass}`}><IconCmp /></div>
@@ -67,7 +73,15 @@ export default function CaseHistoryTab({ groupedLogs, renderLogDetail }) {
                             <span className="cdm-hist-staff-badge"><FaUserCircle /> {log.staff}</span>
                           </div>
                           <div className="cdm-hist-card-body">
-                            {renderLogDetail(log.detail)}
+                            <div className={`cdm-log-content-wrapper ${isLogExpanded ? 'expanded' : 'collapsed'}`}>
+                              {renderLogDetail(log.detail)}
+                            </div>
+                             <button 
+                              className="cdm-log-toggle-btn"
+                              onClick={() => toggleLog(log.id)}
+                            >
+                              {isLogExpanded ? "ย่อข้อความ" : "อ่านเพิ่มเติม..."}
+                            </button>
                           </div>
                         </div>
                       </div>

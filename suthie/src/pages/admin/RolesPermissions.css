@@ -11,6 +11,9 @@
 .srp-roles-permissions-page .srp-card h3 { margin-top: 0; margin-bottom: 20px; font-size: 18px; font-weight: 700; border-left: 5px solid #2f7d7a; padding-left: 12px; }
 /* 5. ปุ่มเพิ่มบทบาท */
 .srp-roles-permissions-page .srp-create-btn { background: #4a9b9f; color: white; border: none; padding: 10px 24px; border-radius: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 15px rgba(74, 155, 159, 0.3); transition: all 0.2s; }
+.srp-roles-permissions-page .srp-roles-header-section .srp-create-btn { display: flex !important; align-items: center !important; gap: 8px !important; background: #4a9b9f !important; color: white !important; border: none !important; padding: 10px 24px !important; border-radius: 14px !important; font-weight: 700 !important; cursor: pointer !important; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; box-shadow: 0 4px 12px rgba(74, 155, 159, 0.2) !important; transform: translateY(0); }
+.srp-roles-permissions-page .srp-roles-header-section .srp-create-btn:hover { background: #3d868a !important; transform: translateY(-4px) !important; box-shadow: 0 8px 20px rgba(74, 155, 159, 0.35) !important; }
+.srp-roles-permissions-page .srp-roles-header-section .srp-create-btn:active { transform: translateY(-1px) !important; box-shadow: 0 2px 5px rgba(74, 155, 159, 0.2) !important; }
 /* 6. รายการบทบาท */
 .srp-roles-permissions-page .srp-role-item { padding: 14px; border-radius: 14px; margin-bottom: 12px; cursor: pointer; border: 1px solid #e5e7eb; transition: 0.2s; }
 .srp-roles-permissions-page .srp-role-item.srp-active { border: 2px solid #F47932; background: #fff8f4; }
@@ -76,10 +79,6 @@
   .srp-roles-permissions-page .srp-card { width: 100%; padding: 14px; border-radius: 16px; box-sizing: border-box; }
 .srp-roles-permissions-page .srp-card h3 { font-size: 16px; padding-left: 8px; }
 /* 5. ปุ่มสร้างบทบาท */
-/* ============================================================
-   🔘 ปรับปุ่มสร้างบทบาทใหม่ให้ลอย (Roles & Permissions)
-   ============================================================ */
-/* 1. กำหนดสถานะปกติและการเคลื่อนไหว */
 .srp-roles-permissions-page .srp-roles-header-section .srp-create-btn { display: flex !important; align-items: center !important; gap: 8px !important; background: linear-gradient(135deg, #F47932 0%, #E65100 100%) !important; color: white !important; border: none !important; padding: 10px 22px !important; border-radius: 12px !important; font-weight: 700 !important; cursor: pointer !important; /* 🟢 ส่วนสำคัญ: ทำให้การเคลื่อนไหวนุ่มนวล */
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; box-shadow: 0 4px 10px rgba(244, 121, 50, 0.2) !important; transform: translateY(0); }
 /* 2. เมื่อเอาเมาส์ไปชี้ (Hover) ให้ลอยขึ้น */

@@ -28,16 +28,48 @@ to { transform: scale(1); opacity: 1; }
 .crm-input { width: 100%; padding: 12px 16px; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 15px; background: #f8fafc; transition: all 0.2s; box-sizing: border-box; }
 .crm-input:focus { outline: none; border-color: #2f7d7a;; background: #ffffff; box-shadow: 0 0 0 4px rgba(47, 125, 122, 0.1); }
 .crm-section-title { font-size: 16px; font-weight: 800; color: #1e293b; margin: 0 0 20px 0; padding-bottom: 10px; border-bottom: 2px solid #fff4ed; }
-/* --- Module Card (ใช้สีส้ม) --- */
-.crm-module-card { background: #ffffff; border: 1.5px solid #f1f5f9; border-radius: 12px; margin-bottom: 12px; transition: all 0.3s ease; overflow: hidden; }
-.crm-module-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #ffffff; }
+/* --- Module Card  --- */
+.crm-module-card { background: #ffffff; 
+  border: 1.5px solid #f1f5f9; 
+  border-radius: 12px; 
+  margin-bottom: 12px; 
+  transition: all 0.3s ease; 
+  overflow: hidden; }
+.crm-module-header { display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: #ffffff; 
+  border: 1.5px solid #e2e8f0; 
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 8px; }
+  .crm-module-header.active {
+  background: #f8fafc; 
+  border-color: #64748b; 
+}
+.crm-module-info h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #334155; 
+}
+.crm-chevron {
+  color: #64748b; 
+  transition: transform 0.3s;
+}
 .crm-module-header:hover { background: #f8fafc; }
 .crm-module-title-text { display: flex; align-items: center; gap: 10px; font-weight: 700; color: #334155; }
-.crm-module-title-text svg { color: #F47932; font-size: 18px; }
+.crm-module-title-text svg,
+.crm-chevron { 
+  color: #64748b !important; 
+  font-size: 18px; 
+}
 /* ลูกศรสีส้ม */
-.crm-module-card.expanded { border-color: #F47932; box-shadow: 0 4px 12px rgba(244, 121, 50, 0.05); }
+.crm-module-card.expanded { border-color: #94a3b8;; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); }
 /* กรอบโมดูลสีส้ม */
-.crm-module-card.expanded .crm-module-header { background: #fff4ed; border-bottom: 1px solid #fff4ed; }
+.crm-module-card.expanded .crm-module-header { background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
 .crm-permission-row-container { padding: 20px; background: #ffffff; animation: crmSlideDown 0.3s ease-out; }
 @keyframes crmSlideDown {
  from { opacity: 0; transform: translateY(-10px); }
@@ -45,7 +77,18 @@ to { opacity: 1; transform: translateY(0); }
  }
 /* --- Checkbox Labels ( เปลี่ยนแค่ตอนคลิกเลือกสิทธิ์เป็นสีเขียว) --- */
 .crm-permission-row { display: flex; flex-wrap: wrap; gap: 12px; }
-.crm-checkbox-label { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #f8fafc !important; border: 1px solid #e2e8f0 !important; border-radius: 12px; font-size: 13px; font-weight: 600; color: #64748b !important; cursor: pointer; transition: all 0.2s ease; }
+.crm-checkbox-label { display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f1f5f9; 
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b; 
+  transition: all 0.2s ease; }
 /* 🟢 เมื่อคลิกเลือก (Active) -> เปลี่ยนเป็นสีเขียว */
 .crm-checkbox-label.active { background: #f0fdfa !important; border-color: #2f7d7a !important; color: #2f7d7a !important; box-shadow: 0 2px 5px rgba(47, 125, 122, 0.1); }
 .crm-checkbox-label input { display: none; }

@@ -1,11 +1,15 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FiCheckCircle, FiActivity, FiInfo, FiCheck } from "react-icons/fi";
+import { FiCheckCircle, FiActivity, FiInfo, FiCheck, FiSend, FiClock } from "react-icons/fi";
 import riskLow from "../../assets/01.png";
 import riskMedium from "../../assets/02.png";
 import riskHigh from "../../assets/03.png";
-import logoSUTH from "../../assets/logoSUTH.png"; // ✅ ใช้ path เดียวกับ SutLanding
+import logoSUTH from "../../assets/logoSUTH.png";
 import "./AssessmentResult.css";
+
+// 🟢 นำเข้า API และ SweetAlert2
+import { submitFormAnswers } from "../../services/api";
+import Swal from "sweetalert2";
 
 // 🟢 ฟังก์ชันผู้ช่วย: แปลงสี HEX เป็น RGB
 const hexToRgbArray = (hex) => {
@@ -76,11 +80,78 @@ export default function AssessmentResult() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // 🟢 รับ Payload ที่ถูกส่งมาจาก FormView
+  const results = location.state?.results || [];
+  const formId = location.state?.formId;
+  const payload = location.state?.payload;
+
+  // 🟢 State ควบคุมสถานะการส่งข้อมูล
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+    // ถ้าไม่มีผลลัพธ์ (เช่น ผู้ใช้เข้าหน้านี้โดยตรง) ให้เด้งกลับหน้าแรก
+    if (!results.length) {
+      navigate("/");
+    }
+  }, [navigate, results.length]);
 
-  const results = location.state?.results || [];
+  // 🟢 ฟังก์ชันจัดการการยิง API
+  const handleSendToStaff = () => {
+    if (!formId || !payload) {
+      Swal.fire('ข้อผิดพลาด', 'ไม่พบข้อมูลสำหรับการส่ง กรุณาทำแบบประเมินใหม่อีกครั้ง', 'error');
+      return;
+    }
+
+    // เรียก SweetAlert2 ยืนยันการส่งแทน Modal เดิม
+    Swal.fire({
+      title: 'ต้องการส่งข้อมูลให้เจ้าหน้าที่?',
+      text: "ระบบจะบันทึกข้อมูลและส่งการแจ้งเตือนไปยังทีมแพทย์/พยาบาล",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'ใช่, ส่งข้อมูล',
+      cancelButtonText: 'ยกเลิก'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        setIsSubmitting(true);
+        
+        // แสดง Loading
+        Swal.fire({
+          title: 'กำลังส่งข้อมูล...',
+          text: 'กรุณารอสักครู่',
+          allowOutsideClick: false,
+          didOpen: () => { Swal.showLoading(); }
+        });
+
+        try {
+          // 🟢 ยิง API ของจริงเพื่อบันทึกลง Database
+          await submitFormAnswers(formId, payload);
+          
+          setIsSaved(true);
+          
+          Swal.fire({
+            icon: 'success',
+            title: 'ส่งข้อมูลสำเร็จ!',
+            text: 'เจ้าหน้าที่ได้รับข้อมูลของท่านแล้ว ท่านสามารถตรวจสอบประวัติได้',
+            confirmButtonColor: '#10b981'
+          });
+        } catch (error) {
+          console.error("Submit Error:", error);
+          Swal.fire({
+            icon: 'error',
+            title: 'ไม่สามารถส่งข้อมูลได้',
+            text: 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง',
+            confirmButtonColor: '#ef4444'
+          });
+        } finally {
+          setIsSubmitting(false);
+        }
+      }
+    });
+  };
 
   return (
     <div className="ar-page">
@@ -104,18 +175,32 @@ export default function AssessmentResult() {
       {/* ─── CONTENT ─── */}
       <div className="ar-container">
 
-        {/* 🟡 HERO HEADER */}
-        <div className="ar-success-hero">
-          <div className="ar-success-icon">
-            <FiCheck size={40} />
+        {/* 🟡 HERO HEADER - เปลี่ยนสีและข้อความตามสถานะการส่ง */}
+        <div 
+          className="ar-success-hero" 
+          style={{ 
+            backgroundColor: isSaved ? '#ecfdf5' : '#f8fafc', 
+            borderColor: isSaved ? '#10b981' : '#e2e8f0' 
+          }}
+        >
+          <div 
+            className="ar-success-icon" 
+            style={{ backgroundColor: isSaved ? '#10b981' : '#3b82f6' }}
+          >
+            {isSaved ? <FiCheckCircle size={40} color="#fff" /> : <FiCheck size={40} color="#fff" />}
           </div>
-          <h2 className="ar-hero-title">บันทึกข้อมูลสำเร็จ</h2>
-          <p className="ar-hero-subtitle">
-            ข้อมูลของท่านถูกส่งเข้าสู่ระบบเรียบร้อยแล้ว ด้านล่างนี้คือสรุปผลการวิเคราะห์เบื้องต้น
+          <h2 className="ar-hero-title">
+            {isSaved ? "ส่งข้อมูลให้เจ้าหน้าที่สำเร็จ" : "ประเมินผลเบื้องต้นเสร็จสิ้น"}
+          </h2>
+          <p className="ar-hero-subtitle" style={{ color: '#475569' }}>
+            {isSaved 
+              ? "ข้อมูลของท่านถูกส่งเข้าสู่ระบบและแจ้งเตือนไปยังทีมแพทย์เรียบร้อยแล้ว"
+              : <span>ด้านล่างนี้คือสรุปผลการวิเคราะห์เบื้องต้น <br />หากต้องการรับการดูแลต่อ กรุณากดปุ่ม <b>“ส่งข้อมูลให้เจ้าหน้าที่”</b> ด้านล่าง</span>
+            }
           </p>
         </div>
 
-        {/* ✅ แสดงการ์ดผลเฉพาะเมื่อมีผลประเมิน — ไม่แสดง "ลงทะเบียนสำเร็จ" ซ้อน */}
+        {/* ✅ แสดงการ์ดผลการประเมิน */}
         {results.length > 0 && results.map((res, index) => {
           const level = getLevelConfig(res);
           return (
@@ -178,26 +263,46 @@ export default function AssessmentResult() {
           );
         })}
 
-        {/* ACTIONS */}
+        {/* 🟢 ACTIONS BUTTONS ควบคุมการแสดงผลตาม State */}
         <div className="ar-actions">
+
+          {/* ปุ่มกลับหน้าหลัก (แสดงตลอด) */}
           <button
             className="ar-btn ar-btn--ghost"
             onClick={() => navigate("/")}
+            disabled={isSubmitting}
           >
             ← กลับหน้าหลัก
           </button>
 
-          <button
-            className="ar-btn"
-            style={{
-              background: isColorTooBright(results[0]?.color || "#2d7d81")
-                ? "#2d7d81"
-                : getLevelConfig(results[0]).color
-            }}
-            onClick={() => navigate("/history")}
-          >
-            ตรวจสอบประวัติ
-          </button>
+          {/* ปุ่มส่งข้อมูลให้เจ้าหน้าที่ (แสดงตอนยังไม่ส่ง) */}
+          {!isSaved && (
+            <button
+              className="ar-btn"
+              style={{ background: "#3b82f6", display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}
+              onClick={handleSendToStaff}
+              disabled={isSubmitting}
+            >
+              <FiSend /> {isSubmitting ? "กำลังส่ง..." : "ส่งข้อมูลให้เจ้าหน้าที่"}
+            </button>
+          )}
+
+          {/* ปุ่มตรวจสอบประวัติ (แสดงหลังจากส่งสำเร็จแล้ว) */}
+          {isSaved && (
+            <button
+              className="ar-btn"
+              style={{
+                background: isColorTooBright(results[0]?.color || "#2d7d81")
+                  ? "#2d7d81"
+                  : getLevelConfig(results[0]).color,
+                display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center'
+              }}
+              onClick={() => navigate("/history")}
+            >
+              <FiClock /> ตรวจสอบประวัติ
+            </button>
+          )}
+
         </div>
 
       </div>

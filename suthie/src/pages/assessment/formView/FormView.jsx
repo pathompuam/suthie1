@@ -10,7 +10,6 @@ import {
 } from "react-icons/fi";
 import {
   getFormById,
-  submitFormAnswers,
   decodeSecureToken,
 } from "../../../services/api";
 import Swal from "sweetalert2";
@@ -134,7 +133,6 @@ const FormView = () => {
           if (storedData) {
             setupFormStructure(JSON.parse(storedData), activeIdentity);
           } else {
-            // 🟢 เปลี่ยน Alert เป็น SweetAlert2
             Swal.fire({
               icon: 'error',
               title: 'ไม่พบข้อมูล',
@@ -595,18 +593,25 @@ const FormView = () => {
         consent_given: consentGiven,
       };
 
-      await submitFormAnswers(id, {
-        answers: mergedAnswers,
-        questionTitles: qTitles,
-        identityValue: idValue,
-        summaryData: sumData,
+      // 🟢 นำ Payload ทั้งหมดส่งไปหน้า AssessmentResult โดยที่ยังไม่ต้องยิง API บันทึกข้อมูล
+      navigate("/assessment-result", { 
+        state: { 
+          results: scoreResultsArray,
+          formId: id,
+          payload: {
+            answers: mergedAnswers,
+            questionTitles: qTitles,
+            identityValue: idValue,
+            summaryData: sumData
+          }
+        } 
       });
-      navigate("/assessment-result", { state: { results: scoreResultsArray } });
+
     } catch (error) {
       Swal.fire({
         icon: 'error',
         title: 'ข้อผิดพลาด',
-        text: 'เกิดข้อผิดพลาด ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่อีกครั้ง',
+        text: 'เกิดข้อผิดพลาดในการประมวลผลข้อมูล กรุณาลองใหม่อีกครั้ง',
         confirmButtonColor: 'var(--theme-color)'
       });
     }

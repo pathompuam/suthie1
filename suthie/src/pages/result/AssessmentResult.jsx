@@ -105,14 +105,18 @@ export default function AssessmentResult() {
     }
 
     Swal.fire({
-      title: 'ต้องการส่งข้อมูลให้เจ้าหน้าที่?',
+      title: 'คุณยินดีให้เจ้าหน้าที่ติดต่อกลับ?',
       text: "ระบบจะบันทึกข้อมูลของท่าน และแจ้งให้เจ้าหน้าที่ที่เกี่ยวข้องทราบ เพื่อดูแลและพิจารณาเบื้องต้น",
       icon: 'question',
+      showCloseButton: true,
       showCancelButton: true,
       confirmButtonColor: '#3b82f6',
-      cancelButtonColor: '#64748b',
-      confirmButtonText: 'ใช่, ส่งข้อมูล',
-      cancelButtonText: 'ยกเลิก'
+      cancelButtonColor: '#ef4444',
+      confirmButtonText: 'ยินดี',
+      cancelButtonText: 'ปฏิเสธ',
+      padding: '2em',
+      background: '#ffffff',
+      borderRadius: '20px'
     }).then(async (result) => {
       if (result.isConfirmed) {
         setIsSubmitting(true);
@@ -150,7 +154,7 @@ export default function AssessmentResult() {
 
   const [hasEvaluated, setHasEvaluated] = useState(false);
   useEffect(() => {
-    const status = localStorage.getItem('eval_done');
+    const status = sessionStorage.getItem('eval_done');
     if (status === 'true') {
       setHasEvaluated(true);
     }
@@ -228,7 +232,7 @@ export default function AssessmentResult() {
           </div>
 
           <div style="background:#fff; border-radius:12px; padding:20px; border-top:6px solid #6366f1; box-shadow:0 4px 12px rgba(0,0,0,0.06)">
-            <h3 style="margin-bottom:15px"> ส่วนที่ 2: SUS</h3>
+            <h3 style="margin-bottom:15px"> ส่วนที่ 2: ความสามารถในการใช้งาน (System Usability Scale )</h3>
             ${renderSUS()}
           </div>
 
@@ -315,8 +319,8 @@ export default function AssessmentResult() {
           await api.post('/submit-system-feedback', payloadData);
 
           // บันทึกสถานะลงเครื่องผู้ใช้ทันที
-          localStorage.setItem('eval_done', 'true');
-          setHasEvaluated(true); 
+          sessionStorage.setItem('eval_done', 'true');
+          setHasEvaluated(true);
 
           Swal.fire({
             icon: 'success',
@@ -417,7 +421,7 @@ export default function AssessmentResult() {
                   <h3 className="ar-advice-box__title" style={{ color: level.textColor }}>
                     <FiInfo size={18} /> คำแนะนำเบื้องต้น
                   </h3>
-                  
+
                   <ul className="ar-advice__list">
                     {level.advice.map((a, i) => (
                       <li key={i}>{a}</li>

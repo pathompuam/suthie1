@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaCog, FaTimes } from 'react-icons/fa';
+import { FaCog, FaTimes, FaFileAlt, FaSyncAlt, FaChevronDown } from 'react-icons/fa';
 
 const PublishSettingsModal = ({ 
   isOpen, onClose, 
@@ -10,7 +10,11 @@ const PublishSettingsModal = ({
   publishStartDate, setPublishStartDate, 
   publishEndDate, setPublishEndDate 
 }) => {
+
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+
   if (!isOpen) return null;
+
 
   return (
     <div className="sfb-modal-overlay">
@@ -40,10 +44,100 @@ const PublishSettingsModal = ({
           {/* 🟢 1. เลือกประเภทฟอร์ม (Registration / Follow-up) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
             <label style={{ fontWeight: 'bold', fontSize: '14.5px', color: '#0f172a' }}>ประเภทของฟอร์ม</label>
-            <select value={formType} onChange={e => setFormType(e.target.value)} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14.5px', outline: 'none' }}>
-              <option value="Registration">📝 ฟอร์มลงทะเบียนแรกเข้า</option>
-              <option value="Follow-up">🔄 แบบประเมินติดตามผล</option>
-            </select>
+            {/* 🔽 วางตรงนี้แทน select เดิม */}
+        <div style={{ position: 'relative' }}>
+  
+          <div
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            style={{
+            padding: '10px',
+            borderRadius: '8px',
+            border: '1px solid #cbd5e1',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            cursor: 'pointer',
+            background: 'white'
+            }}
+          >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{
+            background: formType === "Registration" ? '#dbeafe' : '#dcfce7',
+            padding: '6px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            {formType === "Registration"
+            ? <FaFileAlt color="#2563eb" size={14} />
+            : <FaSyncAlt color="#16a34a" size={14} />}
+      </div>
+
+            {formType === "Registration"
+            ? "ฟอร์มลงทะเบียนแรกเข้า"
+            : "แบบประเมินติดตามผล"}
+      </div>
+
+    <FaChevronDown />
+  </div>
+
+        {dropdownOpen && (
+           <div
+            style={{
+            position: 'absolute',
+            top: '110%',
+            left: 0,
+            right: 0,
+            background: 'white',
+            border: '1px solid #cbd5e1',
+            borderRadius: '8px',
+            zIndex: 1000,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+          }}
+        >
+      <div
+        onClick={() => {
+          setFormType("Registration");
+          setDropdownOpen(false);
+        }}
+        style={{ padding: '10px', display: 'flex', gap: '8px', cursor: 'pointer' }}
+      >
+        <div style={{
+            background: '#dbeafe',
+            padding: '6px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+        }}>
+      <FaFileAlt color="#2563eb" size={14} />
+      </div>
+          ฟอร์มลงทะเบียนแรกเข้า
+      </div>
+
+      <div
+        onClick={() => {
+          setFormType("Follow-up");
+          setDropdownOpen(false);
+        }}
+        style={{ padding: '10px', display: 'flex', gap: '8px', cursor: 'pointer' }}
+      >
+        <div style={{
+            background: '#dcfce7',
+            padding: '6px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+        <FaSyncAlt color="#16a34a" size={14} />
+        </div>
+          แบบประเมินติดตามผล
+      </div>
+    </div>
+  )}
+  </div>
             <p style={{ fontSize: '12px', color: '#64748b', margin: 0, lineHeight: 1.4 }}>
               * ฟอร์มลงทะเบียนจะสร้างเคสใหม่เสมอ ส่วนฟอร์มติดตามผลจะเชื่อมกับเคสเดิม
             </p>

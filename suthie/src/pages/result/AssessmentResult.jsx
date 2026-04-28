@@ -7,8 +7,8 @@ import riskHigh from "../../assets/03.png";
 import logoSUTH from "../../assets/logoSUTH.png";
 import "./AssessmentResult.css";
 
-// 🟢 นำเข้า API และ SweetAlert2
-import { submitFormAnswers } from "../../services/api";
+// 🟢 1. แก้บัค: นำเข้า api ให้ถูกต้อง
+import api, { submitFormAnswers } from "../../services/api";
 import Swal from "sweetalert2";
 
 // 🟢 ฟังก์ชันผู้ช่วย: แปลงสี HEX เป็น RGB
@@ -104,7 +104,6 @@ export default function AssessmentResult() {
       return;
     }
 
-    // เรียก SweetAlert2 ยืนยันการส่งแทน Modal เดิม
     Swal.fire({
       title: 'ต้องการส่งข้อมูลให้เจ้าหน้าที่?',
       text: "ระบบจะบันทึกข้อมูลของท่าน และแจ้งให้เจ้าหน้าที่ที่เกี่ยวข้องทราบ เพื่อดูแลและพิจารณาเบื้องต้น",
@@ -117,8 +116,7 @@ export default function AssessmentResult() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         setIsSubmitting(true);
-        
-        // แสดง Loading
+
         Swal.fire({
           title: 'กำลังส่งข้อมูล...',
           text: 'กรุณารอสักครู่',
@@ -127,11 +125,8 @@ export default function AssessmentResult() {
         });
 
         try {
-          // 🟢 ยิง API ของจริงเพื่อบันทึกลง Database
           await submitFormAnswers(formId, payload);
-          
           setIsSaved(true);
-          
           Swal.fire({
             icon: 'success',
             title: 'ส่งข้อมูลสำเร็จ!',
@@ -148,6 +143,191 @@ export default function AssessmentResult() {
           });
         } finally {
           setIsSubmitting(false);
+        }
+      }
+    });
+  };
+
+  const [hasEvaluated, setHasEvaluated] = useState(false);
+  useEffect(() => {
+    const status = localStorage.getItem('eval_done');
+    if (status === 'true') {
+      setHasEvaluated(true);
+    }
+  }, []);
+  const handleOpenEvaluation = () => {
+    if (hasEvaluated) {
+      Swal.fire({
+        title: 'ขอบคุณสำหรับคำแนะนำ',
+        text: 'คุณได้ตอบแบบประเมินการใช้งานระบบเรียบร้อยแล้ว',
+        icon: 'success',
+        confirmButtonText: 'ตกลง',
+        confirmButtonColor: '#7c3aed'
+      });
+      return;
+    }
+    const renderScale = (name) => `
+      <div style="display:flex; justify-content:space-between; margin-top:10px">
+        ${[1, 2, 3, 4, 5].map(v => `
+          <label style="text-align:center; flex:1; cursor:pointer display:flex; flex-direction:column; align-items:center; gap:6px;">
+            <input type="radio" name="${name}" value="${v}" style="margin:0"/>
+            <div style="font-size:12px font-weight:600; color:#475569;">${v}</div>
+          </label>
+        `).join("")}
+      </div>
+      <div class="evaluation-labels-wrap">
+        <span>น้อยที่สุด</span>
+        <span>มากที่สุด</span>
+      </div>
+    `;
+
+    const renderQuestionBox = (index, text, name) => `
+      <div style="background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 2px 6px rgba(0,0,0,0.05)">
+        <p style="font-weight:600">${index}. ${text}</p>
+        ${renderScale(name)}
+      </div>
+    `;
+
+    const renderSUS = () => {
+      const questions = [
+        "คุณอยากใช้แอปพลิเคชันนี้บ่อย ๆ",
+        "คุณคิดว่าระบบไม่ควรซับซ้อนขนาดนี้",
+        "คุณคิดว่าระบบใช้งานง่าย",
+        "คุณคิดว่าคุณต้องการความช่วยเหลือจากผู้เชี่ยวชาญเพื่อที่จะใช้งานระบบนี้ได้",
+        "คุณพบว่ามีหลายฟังก์ชันที่ทำงานได้ดี",
+        "คุณคิดว่าระบบไม่ค่อยมีความสม่ำเสมอ",
+        "คุณคิดว่าคนอื่นๆ น่าจะเข้าใจวิธีใช้ระบบนี้ได้เร็วเหมือนกัน",
+        "คุณพบว่าการใช้งานระบบนี้ยุ่งยาก/ซับซ้อนมากๆ",
+        "คุณรู้สึกมั่นใจตอนใช้งาน",
+        "คุณต้องการฝึกใช้งานก่อนถึงจะเริ่มใช้งานระบบนี้ได้"
+      ];
+
+      return questions.map((q, i) => `
+        <div style="background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 2px 6px rgba(0,0,0,0.05)">
+          <p style="font-weight:600">${i + 1}. ${q}</p>
+          ${renderScale(`sus${i + 1}`)}
+        </div>
+      `).join('');
+    };
+
+    Swal.fire({
+      title: ' แบบประเมินการใช้งานระบบ',
+      width: window.innerWidth < 768 ? '95%' : 700,
+      showCloseButton: true,
+      closeButtonHtml: '✕',
+      html: `
+        <div style="text-align:left; max-height:450px; overflow:auto overflow-x:hidden;">
+         
+        <div style="background:#fff; border-radius:12px; padding:20px; margin-bottom:15px; border-top:6px solid #7c3aed; box-shadow:0 4px 12px rgba(0,0,0,0.06)">
+            <h3 style="margin-bottom:15px"> ส่วนที่ 1: ความพึงพอใจ</h3>
+            ${renderQuestionBox(1, "คุณมีความพึงพอใจต่อหน้าตาของระบบ โทนสี และขนาดตัวอักษรที่อ่านง่ายและทันสมัย", "q1")}
+            ${renderQuestionBox(2, "ระบบมีการตอบสนองและประมวลผลข้อมูล (เช่น การโหลดหน้าเว็บหรือการส่งฟอร์ม) ได้อย่างรวดเร็ว", "q2")}
+            ${renderQuestionBox(3, "ข้อมูลและคำแนะนำเบื้องต้นที่ได้รับจากระบบมีความชัดเจนและเป็นประโยชน์ต่อคุณ", "q3")}
+            ${renderQuestionBox(4, "ระบบมีความชัดเจน เข้าใจง่าย ไม่สับสนในการใช้งาน", "q4")}
+            ${renderQuestionBox(5, "โดยรวมแล้วคุณมีความพึงพอใจต่อการใช้งานระบบ", "q5")}
+          </div>
+
+          <div style="background:#fff; border-radius:12px; padding:20px; border-top:6px solid #6366f1; box-shadow:0 4px 12px rgba(0,0,0,0.06)">
+            <h3 style="margin-bottom:15px"> ส่วนที่ 2: SUS</h3>
+            ${renderSUS()}
+          </div>
+
+          <div style="margin-top:20px; background:#fff; border-radius:12px; padding:20px; border-top:6px solid #10b981; box-shadow:0 4px 12px rgba(0,0,0,0.06)">
+            <p><b> ข้อเสนอแนะเพิ่มเติม (ถ้ามี)</b></p>
+            <textarea id="comment" class="swal2-textarea" placeholder="พิมพ์ความคิดเห็น..." style="height:80px; width: 250px; font-size:14px; padding:10px; margin-right:10px; border-radius:10px; box-sizing: border-box;"></textarea>
+          </div>
+        </div>
+      `,
+      confirmButtonText: 'ส่งแบบประเมิน',
+      confirmButtonColor: '#7c3aed',
+      preConfirm: () => {
+        const getRadio = (name) => {
+          const el = document.querySelector(`input[name="${name}"]:checked`);
+          return el ? el.value : null;
+        };
+        // 1. ตรวจสอบส่วนที่ 1: ความพึงพอใจ (q1 - q5)
+        for (let i = 1; i <= 5; i++) {
+          const val = getRadio(`q1`); // เช็คไล่ไปทีละข้อ
+          if (!getRadio(`q${i}`)) {
+            Swal.showValidationMessage(`กรุณาตอบส่วนที่ 1 ข้อที่ ${i} ให้ครบถ้วน`);
+            document.getElementsByName(`q${i}`)[0]?.closest('div')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+          }
+        }
+
+        // 2. ตรวจสอบส่วนที่ 2: SUS (sus1 - sus10)
+        let susAnswers = [];
+        for (let i = 1; i <= 10; i++) {
+          const val = getRadio(`sus${i}`);
+          if (!val) {
+            Swal.showValidationMessage(`กรุณาตอบส่วนที่ 2 (SUS) ข้อที่ ${i} ให้ครบถ้วน`);
+            document.getElementsByName(`sus${i}`)[0]?.closest('div')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+          }
+          susAnswers.push(Number(val));
+        }
+
+        const comment = document.getElementById('comment').value;
+
+        // คืนค่าข้อมูลทั้งหมดเมื่อกรอกครบแล้ว (ยกเว้น comment ที่เป็น optional)
+        return {
+          q1: getRadio("q1"),
+          q2: getRadio("q2"),
+          q3: getRadio("q3"),
+          q4: getRadio("q4"),
+          q5: getRadio("q5"),
+          comment,
+          susAnswers
+        };
+      }
+    }).then(async (result) => { // 🟢 3. เพิ่ม async และยิง API ตรงนี้เลย
+      if (result.isConfirmed) {
+        const { q1, q2, q3, q4, q5, comment, susAnswers } = result.value;
+
+        // คำนวณคะแนน SUS
+        let score = 0;
+        susAnswers.forEach((val, i) => {
+          score += (i % 2 === 0) ? (val - 1) : (5 - val);
+        });
+        const susScore = score * 2.5;
+
+        // จัดเตรียมข้อมูลส่ง API
+        const payloadData = {
+          sat_ui: Number(q1),
+          sat_speed: Number(q2),
+          sat_content: Number(q3),
+          sat_access: Number(q4),
+          sat_overall: Number(q5),
+          sus1: susAnswers[0], sus2: susAnswers[1], sus3: susAnswers[2], sus4: susAnswers[3], sus5: susAnswers[4],
+          sus6: susAnswers[5], sus7: susAnswers[6], sus8: susAnswers[7], sus9: susAnswers[8], sus10: susAnswers[9],
+          sus_total_score: susScore,
+          suggestions: comment
+        };
+
+        try {
+          Swal.fire({
+            title: 'กำลังบันทึกข้อมูล...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+          });
+
+          // ยิง API
+          await api.post('/submit-system-feedback', payloadData);
+
+          // บันทึกสถานะลงเครื่องผู้ใช้ทันที
+          localStorage.setItem('eval_done', 'true');
+          setHasEvaluated(true); 
+
+          Swal.fire({
+            icon: 'success',
+            title: 'ส่งสำเร็จ',
+            html: `
+              <p>ขอบคุณสำหรับการประเมิน</p>
+            `,
+            confirmButtonColor: '#10b981'
+          });
+        } catch (error) {
+          Swal.fire("ผิดพลาด", "ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่อีกครั้ง", "error");
         }
       }
     });
@@ -175,16 +355,16 @@ export default function AssessmentResult() {
       {/* ─── CONTENT ─── */}
       <div className="ar-container">
 
-        {/* 🟡 HERO HEADER - เปลี่ยนสีและข้อความตามสถานะการส่ง */}
-        <div 
-          className="ar-success-hero" 
-          style={{ 
-            backgroundColor: isSaved ? '#ecfdf5' : '#f8fafc', 
-            borderColor: isSaved ? '#10b981' : '#e2e8f0' 
+        {/* 🟡 HERO HEADER */}
+        <div
+          className="ar-success-hero"
+          style={{
+            backgroundColor: isSaved ? '#ecfdf5' : '#f8fafc',
+            borderColor: isSaved ? '#10b981' : '#e2e8f0'
           }}
         >
-          <div 
-            className="ar-success-icon" 
+          <div
+            className="ar-success-icon"
             style={{ backgroundColor: isSaved ? '#10b981' : '#3b82f6' }}
           >
             {isSaved ? <FiCheckCircle size={40} color="#fff" /> : <FiCheck size={40} color="#fff" />}
@@ -193,7 +373,7 @@ export default function AssessmentResult() {
             {isSaved ? "ส่งข้อมูลให้เจ้าหน้าที่สำเร็จ" : "ประเมินผลเบื้องต้นเสร็จสิ้น"}
           </h2>
           <p className="ar-hero-subtitle" style={{ color: '#475569' }}>
-            {isSaved 
+            {isSaved
               ? "ข้อมูลของท่านได้รับการบันทึกเรียบร้อยแล้ว และระบบได้แจ้งให้เจ้าหน้าที่ที่เกี่ยวข้องทราบแล้ว"
               : <span>ด้านล่างนี้คือสรุปผลการวิเคราะห์เบื้องต้น <br />หากต้องการรับการดูแลต่อ กรุณากดปุ่ม <b>“ส่งข้อมูลให้เจ้าหน้าที่”</b> ด้านล่าง</span>
             }
@@ -237,6 +417,7 @@ export default function AssessmentResult() {
                   <h3 className="ar-advice-box__title" style={{ color: level.textColor }}>
                     <FiInfo size={18} /> คำแนะนำเบื้องต้น
                   </h3>
+                  
                   <ul className="ar-advice__list">
                     {level.advice.map((a, i) => (
                       <li key={i}>{a}</li>
@@ -302,6 +483,21 @@ export default function AssessmentResult() {
               <FiClock /> ตรวจสอบประวัติ
             </button>
           )}
+
+          {/* ปุ่มประเมินระบบ */}
+          <button
+            className="ar-btn"
+            style={{
+              background: "#7c3aed",
+              display: 'flex',
+              gap: '8px',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onClick={handleOpenEvaluation}
+          >
+            ประเมินการใช้งานระบบ
+          </button>
 
         </div>
 

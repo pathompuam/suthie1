@@ -13,7 +13,6 @@ import teenBg from "../../assets/clinic-teenager.jpg";
 import stiBg from "../../assets/clinic-sti.jpg";
 import behaviorBg from "../../assets/clinic-behavior.jpg";
 import { formCache } from "../../services/cache";
-// ✅ แก้ไขบรรทัดนี้ให้ดึง api เข้ามาใช้งานด้วย
 import api, { getForms, getBanners } from "../../services/api";
 
 const SLIDE_INTERVAL = 6000;
@@ -41,28 +40,50 @@ function useImageType(src) {
   return isBanner;
 }
 
+// ✅ FormCard ที่แก้ไขแล้ว
 function FormCard({ form, themeClass, count, isLoaded }) {
   const navigate = useNavigate();
-  const displayImage = form.image || `${process.env.PUBLIC_URL}/14.png`;
+  const displayImage = form.image;
   const isBanner = useImageType(displayImage);
   const plainDesc = stripHtml(form.description || "คลิกเพื่อประเมินความเสี่ยง");
 
   return (
-    <article className={`sut2-card ${themeClass}`} onClick={() => navigate(`/assessment/${form.id}`)} role="button" tabIndex={0}>
-      <div className={`sut2-card__band ${isBanner ? "sut2-card__band--has-img" : ""}`}>
-        {isBanner && <img className="sut2-card__band-img" src={displayImage} alt={form.title} />}
+    <article
+      className={`sut2-card ${themeClass}`}
+      onClick={() => navigate(`/assessment/${form.id}`)}
+      role="button"
+      tabIndex={0}
+    >
+      {/* ===== Band ด้านบน ===== */}
+      <div
+        className={`sut2-card__band ${displayImage && isBanner ? "sut2-card__band--has-img" : ""} ${displayImage && !isBanner ? "sut2-card__band--has-illust" : ""}`}
+      >
+        {/* มีรูป + เป็น banner → แสดงรูปเต็ม band */}
+        {displayImage && isBanner && (
+          <img className="sut2-card__band-img" src={displayImage} alt={form.title} />
+        )}
+
+        {/* มีรูปแต่ไม่ใช่ banner → แสดงรูปกลาง band */}
+        {displayImage && !isBanner && (
+          <div className="sut2-card__illust-inline">
+            <img src={displayImage} alt="Form Cover" />
+          </div>
+        )}
+
+        {/* ไม่มีรูป → แสดงแค่สี gradient จาก theme (ไม่มี element เพิ่ม) */}
       </div>
-      {!isBanner && (
-        <div className="sut2-card__illust">
-          <img src={displayImage} alt="Form Cover" />
-        </div>
-      )}
+
+      {/* ===== Body ตัวหนังสือ ===== */}
       <div className="sut2-card__body">
         <h3 className="sut2-card__title">{form.title || "ไม่มีชื่อฟอร์ม"}</h3>
         <p className="sut2-card__desc">{plainDesc}</p>
       </div>
+
+      {/* ===== Count ด้านล่าง ===== */}
       <div className="sut2-card__count">
-        {!isLoaded ? <span className="sut2-card__count-text">กำลังโหลด...</span> : (
+        {!isLoaded ? (
+          <span className="sut2-card__count-text">กำลังโหลด...</span>
+        ) : (
           <span className="sut2-card__count-text">
             ผู้เข้ารับการประเมิน <strong>{Number(count).toLocaleString()}</strong> คน
           </span>
@@ -76,8 +97,6 @@ export default function SutLanding2() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-
-  // State จับค่าการเลื่อนหน้าจอ (Scroll Y)
   const [scrollY, setScrollY] = useState(0);
 
   const [slides, setSlides] = useState([]);
@@ -92,16 +111,12 @@ export default function SutLanding2() {
   const [selectedClinic, setSelectedClinic] = useState(null);
   const [animatingClinic, setAnimatingClinic] = useState(null);
   const [animationStage, setAnimationStage] = useState("idle");
-  
-  const pollRef = useRef(null);
 
-  // 🟢 1. สร้าง Ref เพื่อดึงคอนเทนเนอร์ที่ใช้เลื่อนจอ (Scroll Container)
+  const pollRef = useRef(null);
   const scrollContainerRef = useRef(null);
 
   useEffect(() => {
-    const handleResize = () => {
-      // ✅ ใช้เพื่อคำนวณ card width สำหรับ scrollBy
-    };
+    const handleResize = () => {};
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -124,8 +139,7 @@ export default function SutLanding2() {
 
   useEffect(() => {
     getBanners().then(res => setSlides(res.data.map(b => ({ image: b.image, alt: b.filename }))));
-    
-    // ✅ ตรวจ cache ก่อน
+
     const cachedForms = formCache.get('forms');
     if (cachedForms) {
       setForms(cachedForms);
@@ -133,7 +147,6 @@ export default function SutLanding2() {
       return;
     }
 
-    // ถ้าไม่มี ค่อย fetch
     getForms("lastOpened").then(res => {
       const activeForms = res.data.filter(f => {
         if (!f.status || f.status !== 'published') return false;
@@ -145,22 +158,19 @@ export default function SutLanding2() {
         return true;
       });
       setForms([...activeForms].reverse());
-      
-      // ✅ บันทึก cache
       formCache.set('forms', [...activeForms].reverse());
       setLoading(false);
-    }).catch(() => { 
-      setForms([]); 
+    }).catch(() => {
+      setForms([]);
       setLoading(false);
-  });
-}, []);
+    });
+  }, []);
 
-  // ✅ ใช้ useMemo เพื่อหลีกเลี่ยง dependency warning
-  const filteredForms = useMemo(() => 
+  const filteredForms = useMemo(() =>
     selectedClinic
       ? forms.filter(f => (f.clinic_type || "general") === selectedClinic)
       : []
-  , [selectedClinic, forms]);
+    , [selectedClinic, forms]);
 
   useEffect(() => {
     if (activeIdx >= filteredForms.length && filteredForms.length > 0) {
@@ -168,11 +178,9 @@ export default function SutLanding2() {
     }
   }, [filteredForms, activeIdx]);
 
-  // 🟢 2. สั่งให้เมื่อมีการเลือกคลินิก (หรือกดย้อนกลับคลินิกใหม่) เลื่อนแถบการ์ดไปซ้ายสุดทันที
   useEffect(() => {
     setActiveIdx(0);
     if (scrollContainerRef.current) {
-      // หน่วงเวลาเล็กน้อยเพื่อให้ DOM เรนเดอร์การ์ดฟอร์มก่อน แล้วค่อยเลื่อนกลับซ้ายสุดแบบสมูท
       setTimeout(() => {
         if (scrollContainerRef.current) {
           scrollContainerRef.current.scrollTo({ left: 0, behavior: 'smooth' });
@@ -181,13 +189,12 @@ export default function SutLanding2() {
     }
   }, [selectedClinic]);
 
-  // 🟢 3. แก้ไขปุ่ม Prev / Next ให้สั่งเลื่อน Scrollbar ด้วย
   const handleNextForm = useCallback(() => {
     const maxLength = !selectedClinic ? CLINICS.length : filteredForms.length;
     if (activeIdx < maxLength - 1) {
       setActiveIdx(prev => prev + 1);
       if (scrollContainerRef.current) {
-        const cardWidth = window.innerWidth <= 768 ? 280 : 340; // คำนวณความกว้างการ์ด+Gap
+        const cardWidth = window.innerWidth <= 768 ? 280 : 340;
         scrollContainerRef.current.scrollBy({ left: cardWidth, behavior: 'smooth' });
       }
     }
@@ -211,39 +218,29 @@ export default function SutLanding2() {
 
   const fetchAllCounts = useCallback(async (formList) => {
     if (!formList.length) return;
-    
     try {
-      // ✅ เปลี่ยนจาก axios.post เป็น api.post
-      // ✅ เปลี่ยน Path จาก '/api/forms/counts' เป็น '/counts' (เพราะใน api.js มี baseURL ครอบไว้แล้ว)
       const response = await api.post('/counts', {
         formIds: formList.map(f => f.id)
       });
-      
       setCounts(response.data.data);
-    } catch (err) {
-    
-    }
+    } catch (err) {}
   }, []);
 
   const [isInViewport, setIsInViewport] = useState(false);
 
   useEffect(() => {
-    if (!forms.length || !isInViewport) return;  // ✅ ตรวจ viewport ก่อน
-  
+    if (!forms.length || !isInViewport) return;
     fetchAllCounts(forms);
-    pollRef.current = setInterval(() => fetchAllCounts(forms), 60000); // ✅ ลด เป็น 60 วินาที
+    pollRef.current = setInterval(() => fetchAllCounts(forms), 60000);
     return () => clearInterval(pollRef.current);
   }, [forms, fetchAllCounts, isInViewport]);
 
-  // ✅ เพิ่ม Intersection Observer
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
       setIsInViewport(entry.isIntersecting);
     });
-    
     const section = document.querySelector('.sut2-3d-section');
     if (section) observer.observe(section);
-    
     return () => observer.disconnect();
   }, []);
 
@@ -329,9 +326,8 @@ export default function SutLanding2() {
 
         {/* ================= 2. STACKED SLIDER SECTION ================= */}
         <section className="sut2-3d-section">
-          {/* 🟢 นำ Ref มาผูกกับกล่องแม่สุดที่ Scroll ได้ */}
           <div className="sut2-3d-layout-container" ref={scrollContainerRef}>
-            
+
             {/* ด้านซ้าย: Static Promo Card */}
             <div className="sut2-left-column">
               <div className={`sut2-promo-static-card ${isFlipped ? "promo-flip" : ""}`}>
@@ -394,14 +390,13 @@ export default function SutLanding2() {
               </div>
             </div>
 
-            {/* ด้านขวา: กลุ่มแบบประเมินและปุ่มเลื่อน (เอา OnTouch ทิ้งไปเลยเพราะใช้ Native Scroll) */}
+            {/* ด้านขวา */}
             <div className="sut2-3d-main-content">
               <div className={`sut2-stacked-viewport ${selectedClinic ? "is-form-mode" : ""} ${animationStage === "flip" ? "show-forms" : ""}`}>
                 <div className="sut2-stacked-list" key={selectedClinic ? "forms" : "clinics"}>
                   {loading ? (
                     <p style={{ textAlign: 'center', width: '100%', color: 'white' }}>กำลังโหลดข้อมูล...</p>
                   ) : !selectedClinic ? (
-                    /* STEP 1: เลือกคลินิก */
                     CLINICS.map((clinic, index) => {
                       const offset = index - activeIdx;
                       let statusClass = offset === 0 ? "active" : offset < 0 ? "exit" : offset < 3 ? "visible" : "hidden";
@@ -444,7 +439,6 @@ export default function SutLanding2() {
                   ) : filteredForms.length === 0 ? (
                     <p style={{ textAlign: 'center', width: '100%', color: 'white' }}>ไม่มีแบบประเมินในคลินิกนี้</p>
                   ) : (
-                    /* STEP 2: เลือกแบบประเมิน */
                     filteredForms.map((form, index) => {
                       const offset = index - activeIdx;
                       let statusClass = offset === 0 ? "active" : offset < 0 ? "exit" : offset < 3 ? "visible" : "hidden";
@@ -468,7 +462,6 @@ export default function SutLanding2() {
                 </div>
               </div>
 
-              {/* ปุ่มควบคุม Prev/Next (เลื่อนซ้าย-ขวาจริง ๆ ตามคำสั่งด้านบน) */}
               {selectedClinic && (
                 <div className="sut2-compact-controls">
                   <button className="sut2-control-btn" onClick={handlePrevForm} disabled={activeIdx === 0}><FiChevronLeft /></button>
@@ -515,15 +508,14 @@ export default function SutLanding2() {
               </div>
             </div>
 
-            {/* 🟢 ปุ่มลิงก์ดาวน์โหลดคู่มือการใช้งาน (PDF) */}
             <div style={{ textAlign: 'center', marginTop: '45px' }}>
-              <a 
+              <a
                 href={`${process.env.PUBLIC_URL}/docs/user_manual.pdf`}
-                target="_blank" 
+                target="_blank"
                 rel="noopener noreferrer"
-                style={{ 
-                  color: '#ffffff', 
-                  textDecoration: 'underline', 
+                style={{
+                  color: '#ffffff',
+                  textDecoration: 'underline',
                   fontSize: '15px',
                   fontWeight: '500',
                   cursor: 'pointer',
@@ -542,7 +534,7 @@ export default function SutLanding2() {
           </div>
         </section>
 
-      </div >
+      </div>
 
       {/* ================= 4. REVEAL FOOTER ================= */}
       <footer className="sut2-footer">

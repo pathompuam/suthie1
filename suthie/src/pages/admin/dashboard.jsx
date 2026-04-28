@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import CaseTable from "../../components/case/CaseTable";
 import CaseDetailModal from "../../components/case/CaseDetailModal";
 import { getForms, getChartData, getFormById, getDashboardSettings, saveDashboardSettings, getMasterCaseStats, getRecentCases } from "../../services/api";
-import axios from 'axios';
+import SystemEvaluationWidget from "../../components/dashboard/SystemEvaluationWidget";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -13,12 +13,10 @@ import AddChartModal from "../../components/AddChartModal";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useNavigate } from 'react-router-dom';
 import {
-  FiChevronLeft, FiChevronRight, FiArrowRight, FiUsers, FiActivity,
+  FiArrowRight, FiUsers, FiActivity,
   FiAlertCircle, FiArchive, FiDroplet, FiBriefcase, FiPlusSquare, FiShield,
   FiLayers, FiChevronDown
 } from "react-icons/fi";
-
-const API_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/api$/, '');
 
 const COLORS = [
   "#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#FF8FAB",
@@ -182,7 +180,7 @@ export default function Dashboard() {
     } else {
       setSelectedFormId("");
     }
-  }, [selectedClinic, formStatusFilter, filteredForms]);
+  }, [selectedClinic, formStatusFilter, filteredForms, selectedFormId]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 15 } })
@@ -570,6 +568,14 @@ export default function Dashboard() {
             </div>
             {selectedCase && <CaseDetailModal data={selectedCase} onClose={() => setSelectedCase(null)} />}
           </section>
+
+          <hr className="divider" />
+
+          {/* 🟢 เรียกใช้ Component ประเมินระบบตรงนี้ */}
+          <section className="dash-evaluation-wrapper">
+            <SystemEvaluationWidget />
+          </section>
+
         </div>
 
         {chartToDelete && (

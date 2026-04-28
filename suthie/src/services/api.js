@@ -115,6 +115,10 @@ export const getMasterCaseByIdentity = (identity) => api.get(`/master-cases/${id
 export const updateHistoryResponse = (id, data) => api.patch(`/history/response/${id}`, data);
 export const getCaseAnswers = (id) => api.get(`/cases/${id}/answers`);
 
+// ── System Evaluations (สำหรับ Dashboard) ──
+export const getSystemEvaluationsStats = () => api.get('/evaluations/stats');
+export const getSystemEvaluationsList = (page = 1, limit = 10) => api.get(`/evaluations/list?page=${page}&limit=${limit}`);
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('suth_token');
   if (token) config.headers['Authorization'] = `Bearer ${token}`;

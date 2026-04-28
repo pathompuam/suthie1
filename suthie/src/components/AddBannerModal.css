@@ -2,7 +2,7 @@
    ADD BANNER MODAL (Friendly UI - Brand Match Theme)
    ============================================================ */
 
-/* 1. Container Overlay - พื้นหลังเบลอแบบโมเดิร์น */
+/*พื้นหลัง*/
 .abm-overlay {
   position: fixed;
   top: 0;
@@ -17,8 +17,6 @@
   z-index: 9999;
   animation: abmFadeIn 0.3s ease;
 }
-
-/* 2. Card Styling - โค้ง 12px และเงาละมุนเข้ากับหน้าแดชบอร์ด */
 .abm-card {
   width: 700px;
   max-height: 90vh;
@@ -38,12 +36,14 @@
 .abm-card::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 100px; }
 .abm-card::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-/* 3. Header - เส้นประสีส้มอ่อนให้เข้ากับธีมหลัก */
+/* 3. Header  */
 .abm-header {
-  padding: 35px 40px 20px;
+  position: relative; 
   display: flex;
-  flex-direction: column;
-  border-bottom: 2px dashed #fed7aa; /* 🟢 สีส้มพาสเทลอิงจาก Header */
+  flex-direction: column; 
+  align-items: flex-start;
+  padding: 25px 30px;
+  border-bottom: 2px dashed #fed7aa;
 }
 
 .abm-header h3 {
@@ -52,13 +52,23 @@
   font-weight: 800;
   color: #1e293b;
 }
+.abm-header-content h3 {
+  margin: 0 0 4px 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1e293b;
+}
 
 .abm-header p { margin: 0; font-size: 14px; color: #64748b; }
-
+.abm-header-content p {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+  display: block; 
+}
 /* 4. Body */
 .abm-body { padding: 30px 40px; }
 
-/* 5. Upload Area - สีเขียวน้ำทะเลอ่อนๆ (Teal) */
 .abm-upload-area {
   display: flex;
   flex-direction: column;
@@ -66,18 +76,18 @@
   justify-content: center;
   width: 100%;
   height: 220px;
-  border: 2px dashed #b4d8d9; /* 🟢 เส้นประสีเขียวอ่อนเข้ากับปุ่ม */
+  border: 2px dashed #b4d8d9; 
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   background: #f8fafc; 
-  color: #4a9b9f; /* 🟢 ข้อความและไอคอนสีเขียวน้ำทะเล */
+  color: #4a9b9f; 
   gap: 12px;
 }
 
 .abm-upload-area:hover {
-  border-color: #F47932; /* 🟢 โฮเวอร์แล้วขอบเปลี่ยนเป็นสีส้มของเว็บ! */
-  background: #fffaf7; /* พื้นหลังอมส้มอ่อนๆ */
+  border-color: #F47932; 
+  background: #fffaf7; 
   color: #F47932;
   transform: scale(1.02); 
 }
@@ -116,12 +126,11 @@
 
 .abm-input:focus {
   outline: none;
-  border-color: #4a9b9f; /* 🟢 ขอบสีเขียวน้ำทะเลตอนพิมพ์ */
+  border-color: #4a9b9f; 
   background: #ffffff;
-  box-shadow: 0 0 0 4px rgba(74, 155, 159, 0.15); /* 🟢 เงาโฟกัสสีเขียว */
+  box-shadow: 0 0 0 4px rgba(74, 155, 159, 0.15); 
 }
 
-/* ปุ่ม "ตัดใหม่" */
 .abm-btn-outline-sm {
   background: #ffffff;
   border: 1.5px solid #e2e8f0;
@@ -136,7 +145,7 @@
 
 .abm-btn-outline-sm:hover {
   background: #fffaf7;
-  color: #F47932; /* 🟢 โฮเวอร์เป็นสีส้ม */
+  color: #F47932; 
   border-color: #fed7aa;
 }
 
@@ -164,7 +173,7 @@
 
 .abm-btn-cancel:hover { background: #f1f5f9; color: #1e293b; }
 
-/* 🟢 ปุ่มบันทึก - ใช้สีเขียวน้ำทะเลธีมเว็บ */
+/*  ปุ่มบันทึก */
 .abm-btn-save {
   background: linear-gradient(135deg, #4a9b9f, #3b8286); 
   color: #ffffff;
@@ -188,6 +197,63 @@
   color: #94a3b8;
   box-shadow: none;
   cursor: not-allowed;
+}
+.close-icon-custom {
+  position: relative;
+  width: 16px; 
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.abm-close-btn-custom {
+  position: absolute; 
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background-color: #fef2f2; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  z-index: 10;
+}
+.close-cross {
+  position: relative;
+  width: 18px; 
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-cross::before,
+.close-cross::after {
+  content: "";
+  position: absolute;
+  width: 100%;      
+  height: 2px; 
+  background-color: #ef4444; 
+  border-radius: 10px;
+  transition: background-color 0.3s;
+}
+.close-cross::before { transform: rotate(45deg); }
+.close-cross::after { transform: rotate(-45deg); }
+
+/* 🟢 เอฟเฟกต์ตอน Hover (หมุน 180 องศา) */
+.abm-close-btn-custom:hover {
+  background-color: #fee2e2;
+  transform: rotate(180deg); 
+}
+
+.abm-close-btn-custom:hover .close-cross::before,
+.abm-close-btn-custom:hover .close-cross::after {
+  background-color: #dc2626;
 }
 
 /* 8. Animations */

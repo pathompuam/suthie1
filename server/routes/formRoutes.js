@@ -462,4 +462,98 @@ router.post('/forms/:id/duplicate', async (req, res) => {
     }
 });
 
+// รับข้อมูลจาก Popup ประเมินความพึงพอใจของระบบ
+router.post('/submit-system-feedback', async (req, res) => {
+    const d = req.body;
+    try {
+        const query = `
+            INSERT INTO system_satisfaction_evaluations 
+            (sat_ui, sat_speed, sat_content, sat_access, sat_overall, 
+             sus1, sus2, sus3, sus4, sus5, sus6, sus7, sus8, sus9, sus10, 
+             sus_total_score, suggestions) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        const values = [
+            d.sat_ui, d.sat_speed, d.sat_content, d.sat_access, d.sat_overall,
+            d.sus1, d.sus2, d.sus3, d.sus4, d.sus5, d.sus6, d.sus7, d.sus8, d.sus9, d.sus10,
+            d.sus_total_score, d.suggestions
+        ];
+        
+        await db.query(query, values);
+        res.status(201).json({ message: "บันทึกการประเมินสำเร็จ" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "เกิดข้อผิดพลาดในการบันทึกข้อมูล" });
+    }
+});
+
+router.get('/evaluations/stats', async (req, res) => {
+    try {
+        // 1. ดึงค่าเฉลี่ยทั้งหมด (🟢 เพิ่มการหาค่าเฉลี่ยของ sus ทั้ง 10 ข้อ)
+        const [stats] = await db.query(`
+            SELECT 
+                COUNT(id) as total_votes,
+                AVG(sat_ui) as avg_ui,
+                AVG(sat_speed) as avg_speed,
+                AVG(sat_content) as avg_content,
+                AVG(sat_access) as avg_access,
+                AVG(sat_overall) as avg_overall,
+                AVG(sus_total_score) as avg_sus,
+                AVG(sus1) as avg_sus1, AVG(sus2) as avg_sus2, AVG(sus3) as avg_sus3, 
+                AVG(sus4) as avg_sus4, AVG(sus5) as avg_sus5, AVG(sus6) as avg_sus6, 
+                AVG(sus7) as avg_sus7, AVG(sus8) as avg_sus8, AVG(sus9) as avg_sus9, AVG(sus10) as avg_sus10
+            FROM system_satisfaction_evaluations
+        `);
+
+        // 2. ดึงคอมเมนต์ 10 อันล่าสุด ที่มีการพิมพ์ข้อความจริงๆ
+        const [comments] = await db.query(`
+            SELECT suggestions, created_at 
+            FROM system_satisfaction_evaluations 
+            WHERE suggestions IS NOT NULL AND TRIM(suggestions) != ''
+            ORDER BY created_at DESC 
+            LIMIT 10
+        `);
+
+        res.json({
+            ...stats[0],
+            recent_comments: comments
+        });
+    } catch (err) {
+        console.error("Fetch Eval Stats Error:", err);
+        res.status(500).json({ error: "Failed to fetch evaluation stats" });
+    }
+});
+
+router.get('/evaluations/list', async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = (page - 1) * limit;
+
+        // นับจำนวนข้อมูลทั้งหมด
+        const [totalRows] = await db.query(`SELECT COUNT(*) as count FROM system_satisfaction_evaluations`);
+        const total = totalRows[0].count;
+
+        // ดึงข้อมูลตามหน้า (เรียงจากใหม่ไปเก่า)
+        const [rows] = await db.query(`
+            SELECT 
+                id, sat_ui, sat_speed, sat_content, sat_access, sat_overall, 
+                sus_total_score, suggestions, created_at
+            FROM system_satisfaction_evaluations
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?
+        `, [limit, offset]);
+
+        res.json({
+            data: rows,
+            total,
+            page,
+            totalPages: Math.ceil(total / limit)
+        });
+    } catch (err) {
+        console.error("Fetch Eval List Error:", err);
+        res.status(500).json({ error: "Failed to fetch evaluation list" });
+    }
+});
+
 module.exports = router;

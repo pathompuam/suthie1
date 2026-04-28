@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import Cropper from "react-easy-crop";
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiX } from "react-icons/fi";
 import "./AddBannerModal.css";
 
 // ฟังก์ชันครอปรูปภาพ 
@@ -96,7 +96,7 @@ export default function AddBannerModal({ onClose, onSave }) {
       setCroppedImage(cropped);
       setIsCropping(false);
     } catch (e) {
-      
+
       alert("เกิดข้อผิดพลาดในการประมวลผลรูปภาพ กรุณาลองใหม่อีกครั้ง");
     }
   };
@@ -115,6 +115,9 @@ export default function AddBannerModal({ onClose, onSave }) {
         <div className="abm-header">
           <h3>เพิ่มแบนเนอร์ใหม่</h3>
           <p>{isCropping ? "เลื่อนกรอบเพื่อจัดตำแหน่งรูปภาพ (ขนาด1024 x 768 px)" : "ระบุรายละเอียดแบนเนอร์"}</p>
+          <button className="abm-close-btn-custom" onClick={onClose} aria-label="Close">
+            <span className="close-cross"></span>
+          </button>
         </div>
 
         <div className="abm-body">

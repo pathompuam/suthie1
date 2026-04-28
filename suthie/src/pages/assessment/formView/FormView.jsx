@@ -678,13 +678,15 @@ const FormView = () => {
         </div>
       )}
 
-      <button
-        className="form-view-back-btn"
-        onClick={() => navigate(-1)}
-        title="ย้อนกลับ"
-      >
-        <FiArrowLeft />
-      </button>
+   {!isPreviewMode && (
+  <button
+    className="form-view-back-btn"
+    onClick={() => navigate(-1)}
+    title="ย้อนกลับ"
+  >
+    <FiArrowLeft />
+  </button>
+)}
 
       {bannerType !== "none" && (
         <div

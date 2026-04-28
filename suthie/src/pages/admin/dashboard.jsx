@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import CaseTable from "../../components/case/CaseTable";
 import CaseDetailModal from "../../components/case/CaseDetailModal";
 import { getForms, getChartData, getFormById, getDashboardSettings, saveDashboardSettings, getMasterCaseStats, getRecentCases } from "../../services/api";
-import axios from 'axios';
+import SystemEvaluationWidget from "../../components/dashboard/SystemEvaluationWidget";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -13,12 +13,10 @@ import AddChartModal from "../../components/AddChartModal";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useNavigate } from 'react-router-dom';
 import {
-  FiChevronLeft, FiChevronRight, FiArrowRight, FiUsers, FiActivity,
+  FiArrowRight, FiUsers, FiActivity,
   FiAlertCircle, FiArchive, FiDroplet, FiBriefcase, FiPlusSquare, FiShield,
-  FiLayers, FiChevronDown
+  FiLayers, FiChevronDown, FiBarChart2
 } from "react-icons/fi";
-
-const API_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/api$/, '');
 
 const COLORS = [
   "#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#FF8FAB",
@@ -137,7 +135,7 @@ export default function Dashboard() {
           setMasterCaseStats(prev => ({ ...prev, ...res.data }));
         }
       } catch (err) {
-        
+
       }
     };
     fetchMasterCaseStats();
@@ -168,7 +166,7 @@ export default function Dashboard() {
             }
           }
         }
-      } catch (err) {  }
+      } catch (err) { }
     };
     loadInitialData();
   }, []);
@@ -182,7 +180,7 @@ export default function Dashboard() {
     } else {
       setSelectedFormId("");
     }
-  }, [selectedClinic, formStatusFilter, filteredForms]);
+  }, [selectedClinic, formStatusFilter, filteredForms, selectedFormId]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 15 } })
@@ -205,7 +203,7 @@ export default function Dashboard() {
           })
         );
         setChartsByForm(prev => ({ ...prev, [selectedFormId]: freshCharts }));
-      } catch (err) {  }
+      } catch (err) { }
     };
     refetchCharts();
   }, [startDate, endDate, selectedFormId, charts]);
@@ -241,7 +239,7 @@ export default function Dashboard() {
         const res = await getRecentCases(selectedClinic);
         setCases(res.data);
       } catch (err) {
-        
+
         setCases([]);
       } finally {
         setIsLoading(false);
@@ -519,10 +517,13 @@ export default function Dashboard() {
           </div>
 
           {filteredData.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 20px", backgroundColor: "#ffffff", borderRadius: "20px", boxShadow: "0 10px 25px rgba(0,0,0,0.05)", marginBottom: "40px" }}>
-              <div style={{ fontSize: "48px", marginBottom: "10px" }}>📊</div>
-              <h3 style={{ fontSize: "20px", fontWeight: "600", color: "#374151" }}>ไม่มีข้อมูลสถิติในช่วงวันที่เลือก</h3>
-              <p style={{ color: "#9ca3af", marginTop: "8px" }}>กรุณาลองปรับเปลี่ยนช่วงเวลา หรือเลือกแบบฟอร์มใหม่อีกครั้ง</p>
+            <div className="db-empty-state-card">
+              <div className="db-empty-icon-wrap">
+                <FiBarChart2 size={48} strokeWidth={1.5} />
+              </div>
+
+              <h3 style={{ fontSize: "20px", fontWeight: "600", color: "#64748B" }}>ไม่มีข้อมูลสถิติในช่วงวันที่เลือก</h3>
+              <p style={{ color: "#94A3B8", marginTop: "8px" }}>กรุณาลองปรับเปลี่ยนช่วงเวลา หรือเลือกแบบฟอร์มใหม่อีกครั้ง</p>
             </div>
           ) : (
             <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToParentElement]} sensors={sensors}>
@@ -560,6 +561,7 @@ export default function Dashboard() {
               </button>
             </div>
             <div className="dash-case-table-scroll-area">
+              
               <CaseTable
                 data={filteredData.slice(0, 10)}
                 questions={currentFormDetails?.questions || []}
@@ -570,6 +572,14 @@ export default function Dashboard() {
             </div>
             {selectedCase && <CaseDetailModal data={selectedCase} onClose={() => setSelectedCase(null)} />}
           </section>
+
+          <hr className="divider" />
+
+          {/* 🟢 เรียกใช้ Component ประเมินระบบตรงนี้ */}
+          <section className="dash-evaluation-wrapper">
+            <SystemEvaluationWidget />
+          </section>
+
         </div>
 
         {chartToDelete && (
@@ -599,7 +609,7 @@ export default function Dashboard() {
 
 // ✅ label ยื่นออกนอกวง + เส้นชี้ 
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-  if (percent < 0.03) return null; 
+  if (percent < 0.03) return null;
 
   const RADIAN = Math.PI / 180;
 
@@ -661,7 +671,7 @@ const SortableChart = React.memo(function SortableChart({ id, title, type, quest
 
   const processedPieData = useMemo(() => {
     if (!data || data.length === 0) return [];
-    
+
     const counts = {};
     data.forEach(item => {
       let resultText = "";
@@ -674,16 +684,16 @@ const SortableChart = React.memo(function SortableChart({ id, title, type, quest
       else if (item.summary_data) {
         try {
           const summary = typeof item.summary_data === 'string' ? JSON.parse(item.summary_data) : item.summary_data;
-          
+
           if (summary.score_results && Array.isArray(summary.score_results)) {
-            const sr = summary.score_results.find(s => 
-              String(s.question_id) === String(question) || 
-              String(s.id) === String(question) || 
+            const sr = summary.score_results.find(s =>
+              String(s.question_id) === String(question) ||
+              String(s.id) === String(question) ||
               String(s.questionId) === String(question)
             );
             if (sr && sr.label) resultText = sr.label;
           }
-          
+
           if (!resultText) {
             resultText = summary[`${question}_label`] || summary[`${question}_result`] || "";
           }
@@ -699,9 +709,9 @@ const SortableChart = React.memo(function SortableChart({ id, title, type, quest
       // 🟢 3. กรณีไม่มีคะแนนสรุป ให้ดึงจากคำตอบดิบ
       if (!resultText) {
         let rawName = item.name;
-        
+
         if (typeof rawName === 'string' && rawName.trim().startsWith('{')) {
-          try { rawName = JSON.parse(rawName); } catch(e){}
+          try { rawName = JSON.parse(rawName); } catch (e) { }
         }
 
         if (typeof rawName === "object" && rawName !== null) {
@@ -711,7 +721,7 @@ const SortableChart = React.memo(function SortableChart({ id, title, type, quest
               counts[cleanVal] = (counts[cleanVal] || 0) + 1;
             }
           });
-          return; 
+          return;
         } else if (rawName) {
           resultText = String(rawName).replace(/<[^>]*>/g, "").replace(/&nbsp;/gi, " ").trim();
         }
@@ -722,7 +732,7 @@ const SortableChart = React.memo(function SortableChart({ id, title, type, quest
         counts[resultText] = (counts[resultText] || 0) + (Number(item.value || 1));
       }
     });
-    
+
     return Object.keys(counts).map(k => ({
       name: k,
       value: counts[k]
@@ -773,15 +783,15 @@ const SortableChart = React.memo(function SortableChart({ id, title, type, quest
                 <BarChart data={processedPieData} margin={{ top: 25, right: 30, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
                   <XAxis dataKey="name" hide />
-                  
-                  <YAxis 
-                    tick={{ fontSize: 12, fill: '#1e293b', fontWeight: '500' }} 
-                    axisLine={false} 
-                    tickLine={false} 
-                    allowDecimals={false} 
+
+                  <YAxis
+                    tick={{ fontSize: 12, fill: '#1e293b', fontWeight: '500' }}
+                    axisLine={false}
+                    tickLine={false}
+                    allowDecimals={false}
                   />
                   <Tooltip cursor={{ fill: "rgba(0,0,0,0.04)" }} />
-                  
+
                   <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={60}>
                     {processedPieData.map((_, index) => (
                       <Cell key={index} fill={colors[index % colors.length]} />
@@ -793,31 +803,31 @@ const SortableChart = React.memo(function SortableChart({ id, title, type, quest
           </div>
 
           {/* 🟢 5. ส่วนคำอธิบายแบบป้าย (Badges) และจุดสีวงกลม */}
-          <div style={{ 
-            display: "flex", 
-            flexWrap: "wrap", 
-            justifyContent: "center", 
-            gap: "10px", 
-            marginTop: "15px", 
+          <div style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            gap: "10px",
+            marginTop: "15px",
             width: "100%",
             padding: "0 10px"
           }}>
             {processedPieData.map((item, index) => (
-              <div key={index} style={{ 
-                display: "flex", 
-                alignItems: "center", 
-                gap: "6px", 
-                fontSize: "12px", 
-                background: '#f8fafc', 
-                padding: '4px 12px', 
-                borderRadius: '20px', 
-                border: '1px solid #e2e8f0' 
+              <div key={index} style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "12px",
+                background: '#f8fafc',
+                padding: '4px 12px',
+                borderRadius: '20px',
+                border: '1px solid #e2e8f0'
               }}>
-                <div style={{ 
-                  width: "8px", 
-                  height: "8px", 
-                  background: colors[index % colors.length], 
-                  borderRadius: "50%" 
+                <div style={{
+                  width: "8px",
+                  height: "8px",
+                  background: colors[index % colors.length],
+                  borderRadius: "50%"
                 }} />
                 <span style={{ color: "#475569" }}>
                   {item.name}: <strong>{item.value} คน</strong>

@@ -105,16 +105,19 @@ export default function AssessmentResult() {
     }
 
     Swal.fire({
-      title: 'คุณยินดีให้เจ้าหน้าที่ติดต่อกลับ?',
-      text: "ระบบจะบันทึกข้อมูลของท่าน และแจ้งให้เจ้าหน้าที่ที่เกี่ยวข้องทราบ เพื่อดูแลและพิจารณาเบื้องต้น",
+      title: 'คุณยินยอมให้เจ้าหน้าที่<br/>ติดต่อกลับหรือไม่?',
+      html: `ข้อมูลของท่านจะถูกเก็บเป็นความลับ<br/>
+         และส่งต่อให้เจ้าหน้าที่ที่เกี่ยวข้องเท่านั้น<br/>
+         เพื่อการดูแลและให้คำแนะนำเบื้องต้น`,
       icon: 'question',
       showCloseButton: true,
       showCancelButton: true,
       confirmButtonColor: '#3b82f6',
       cancelButtonColor: '#ef4444',
-      confirmButtonText: 'ยินดี',
+      confirmButtonText: 'ยินยอม',
       cancelButtonText: 'ปฏิเสธ',
-      padding: '2em',
+      width: '500px',
+      padding: '2.5em',
       background: '#ffffff',
       borderRadius: '20px'
     }).then(async (result) => {

@@ -21,6 +21,18 @@ const saveUserToList = (username) => {
 export default function Login() {
   const navigate = useNavigate();
 
+  // 🟢 1. บังคับ Logout ทันทีที่หลุดเข้ามาหน้า Login
+  useEffect(() => {
+    localStorage.removeItem("suth_user");
+    localStorage.removeItem("suth_token");
+    sessionStorage.removeItem("suth_user");
+    sessionStorage.removeItem("suth_token");
+
+    // แจ้งแท็บอื่นๆ ที่กำลังเปิดอยู่ให้ Logout ด้วย
+    localStorage.setItem("SUTH_LOGOUT", Date.now().toString());
+    localStorage.removeItem("SUTH_LOGOUT");
+  }, []);
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -82,15 +94,12 @@ export default function Login() {
   }, []);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("suth_remember");
-      if (saved) {
-        const { u, p } = JSON.parse(saved);
-        if (u) setUsername(u);
-        if (p) setPassword(p);
-        setRememberMe(true);
-      }
-    } catch { localStorage.removeItem("suth_remember"); }
+    // ดึงแค่ Username ที่เคยจำไว้มาใส่ช่อง
+    const rememberedUser = localStorage.getItem("suth_remember_username");
+    if (rememberedUser) {
+      setUsername(rememberedUser);
+      setRememberMe(true); // ติ๊กถูกเอาไว้ให้เหมือนเดิม
+    }
   }, []);
 
   /* ── ปิด dropdown เมื่อคลิกนอก ── */
@@ -154,13 +163,6 @@ export default function Login() {
     setUsername(name);
     setShowDropdown(false);
     setActiveIndex(-1);
-    try {
-      const saved = localStorage.getItem("suth_remember");
-      if (saved) {
-        const { u, p } = JSON.parse(saved);
-        if (u === name && p) setPassword(p);
-      }
-    } catch { }
   };
 
   const removeSuggestion = (e, name) => {
@@ -206,17 +208,19 @@ export default function Login() {
 
       if (response.data.success) {
         const { user, token } = response.data;
-        localStorage.setItem("suth_user", JSON.stringify(user));
-        localStorage.setItem("suth_token", token);
-
-        saveUserToList(username);
-
+        
+        // 🟢 2. ถ้าติ๊ก "จดจำฉัน" ให้ฝังเครื่อง (localStorage) ถ้าไม่ติ๊กให้จำแค่ตอนเปิดแท็บ (sessionStorage)
         if (rememberMe) {
-          localStorage.setItem("suth_remember", JSON.stringify({ u: username, p: password }));
+          localStorage.setItem("suth_user", JSON.stringify(user));
+          localStorage.setItem("suth_token", token);
+          localStorage.setItem("suth_remember_username", username);
         } else {
-          localStorage.removeItem("suth_remember");
+          sessionStorage.setItem("suth_user", JSON.stringify(user));
+          sessionStorage.setItem("suth_token", token);
+          localStorage.removeItem("suth_remember_username"); // เคลียร์ของเก่าทิ้งถ้าไม่ให้จำ
         }
 
+        saveUserToList(username);
         navigate("/admin/dashboard");
       }
     } catch (err) {

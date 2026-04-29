@@ -14,7 +14,7 @@ export default function HistorySearch() {
   const [showId, setShowId] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const containerRef = useRef(null); /*ฟองสบู่ขยับหนีเมาส์ */
+  const containerRef = useRef(null);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -28,34 +28,39 @@ export default function HistorySearch() {
 
     setLoading(true);
     try {
-      // 🟢 เปลี่ยนไปเรียก API ตัวใหม่ (master-cases) เพื่อตรวจสอบว่ามีประวัติหรือไม่
-      await axios.get(`${API_BASE}/api/master-cases/${clean}`, {
+      // 🟢 เรียก API เพื่อตรวจสอบว่ามีเลขบัตรนี้ในระบบหรือไม่
+      const response = await axios.get(`${API_BASE}/api/master-cases/${clean}`, {
         headers: { 'ngrok-skip-browser-warning': 'true' }
       });
 
-      navigate('/history/result', { state: { identity: clean } });
-
-      // 🟢 ถ้าเจอประวัติ ให้ส่งแค่เลขบัตร (identity) ไป แล้วหน้า Result จะโหลด Timeline ต่อเอง
-      navigate('/history/result', { state: { identity: clean } });
+      // 🟢 ถ้าพบข้อมูล (API ตอบกลับสำเร็จ) ค่อย Navigate ไปหน้า Result
+      if (response.data) {
+        navigate('/history/result', { state: { identity: clean } });
+      }
 
     } catch (err) {
-      setError(err.response?.status === 404 ? 'ไม่พบประวัติการรับบริการในระบบ' : 'เกิดข้อผิดพลาด กรุณาลองใหม่');
       setLoading(false);
+      // 🔴 ถ้าไม่พบข้อมูล (404) หรือเกิดข้อผิดพลาดอื่น ให้แจ้งเตือนที่หน้านี้เลย
+      if (err.response?.status === 404) {
+        setError('ไม่พบประวัติการรับบริการ');
+      } else {
+        setError('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
+      }
     }
   };
 
 
   return (
     <div
-  className="history-search-container"
-  style={{
-    backgroundImage: `url(${bgImage})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat'
-  }}
-  ref={containerRef}
->
+      className="history-search-container"
+      style={{
+        backgroundImage: `url(${bgImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+      ref={containerRef}
+    >
 
 
       <Navbar
@@ -95,8 +100,11 @@ export default function HistorySearch() {
                 {showId ? <FiEyeOff /> : <FiEye />}
               </button>
             </div>
-
-            {error && <div className="history-error">{error}</div>}
+            {error && (
+              <div className="history-error" style={{ textAlign: 'center', marginTop: '15px' }}>
+                {error}
+              </div>
+            )}
 
             <button type="submit" className="history-submit-btn" disabled={loading}>
               {loading ? (

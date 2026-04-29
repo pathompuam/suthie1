@@ -70,8 +70,6 @@
   display: flex; align-items: center; justify-content: center;
   margin: 0 auto 20px; color: #1967d2; font-size: 24px;
 }
-.history-title { font-size: 20px; font-weight: 800; color: #1e293b; margin-bottom: 8px; }
-.history-desc { font-size: 14px; color: #64748b; margin-bottom: 25px; line-height: 1.5; }
 
 .history-form { display: flex; flex-direction: column; }
 
@@ -121,8 +119,14 @@
 .history-eye:hover { color: #1967d2; }
 
 .history-error {
-  color: #d93025; font-size: 13px;
-  text-align: left; margin-top: 4px; margin-bottom: 8px;
+ color: #ef4444; 
+  font-size: 14.5px;
+  font-weight: 600;
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(239, 68, 68, 0.05);
+  border-radius: 8px;
+  animation: shakeError 0.4s ease-in-out forwards;
 }
 
 .history-submit-btn {
@@ -169,15 +173,15 @@
 
 .history-card-premium {
   font-family: 'Noto Sans Thai', sans-serif;
-  background: rgba(255, 255, 255, 0.30);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 30px;
-  padding: 90px 40px 50px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  padding: 70px 40px 50px;
   width: 100%;
   max-width: 500px;
   text-align: center;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
   animation: cardFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   padding-top: 70px;
@@ -250,7 +254,6 @@
 }
 .reveal-hidden {
   opacity: 0;
-  /* 🟢 เพิ่ม scale เพื่อให้ดูมีมิติเวลาปรากฏ */
   transform: scale(0.9) translateY(20px); 
 }
 
@@ -265,7 +268,6 @@
   border-radius: 24px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.06);
   text-align: center;
-  /* 🟢 แอนิเมชันตอนโหลดกล่อง */
   opacity: 0;
   animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -282,31 +284,28 @@
   backdrop-filter: blur(10px);
   display: flex; align-items: center; justify-content: center;
   margin: 0 auto 20px; 
-  color: #ea580c; /* 🟠 เปลี่ยนไอคอนเป็นสีส้มเข้ม */
+  color: #ea580c;
   font-size: 40px;
-  /* 🟢 แอนิเมชันไอคอนเด้งขึ้นมา */
   opacity: 0;
   animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s forwards;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4); /* 🔥 เงาลอย */
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4); 
   z-index: 10;
 }
 
 .history-title { 
   font-size: 22px; 
   font-weight: 800; 
-  color: #f8fafc; 
+  color: #1e293b !important; 
   margin-bottom: 8px; 
-  /* 🟢 เฟดข้อความตามลำดับ */
   opacity: 0;
   animation: fadeInUp 0.5s ease-out 0.3s forwards;
 }
 
 .history-desc { 
   font-size: 14.5px; 
-  color: #e2e8f0;; 
+  color: #475569 !important; 
   margin-bottom: 30px; 
   line-height: 1.5; 
-  /* 🟢 เฟดข้อความตามลำดับ */
   opacity: 0;
   animation: fadeInUp 0.5s ease-out 0.4s forwards;
 }
@@ -314,7 +313,6 @@
 .history-form { 
   display: flex; 
   flex-direction: column; 
-  /* 🟢 เฟดฟอร์มตามลำดับ */
   opacity: 0;
   animation: fadeInUp 0.5s ease-out 0.5s forwards;
 }
@@ -350,12 +348,11 @@
 }
 
 .history-input:hover {
-  border-color: #f97316; /* 🟠 Hover เป็นสีส้ม */
+  border-color: #f97316; 
 }
 
 .history-input:focus {
   border-color: #ea580c;
-  /* 🟠 Focus Shadow เปลี่ยนเป็นสีส้ม */
   box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15);
   transform: translateY(-1px);
 }
@@ -382,15 +379,16 @@
 }
 
 .history-error {
-  color: #ef4444; 
-  font-size: 13.5px;
-  font-weight: 500;
-  text-align: left; 
-  margin-top: 4px; 
-  margin-bottom: 8px;
-  padding-left: 4px;
-  /* 🟢 แอนิเมชันสั่นเตือนเวลากรอกผิด */
-  animation: shakeError 0.4s ease-in-out forwards;
+ color: #c53030 !important; 
+  font-size: 15.5px !important; 
+  font-weight: 700 !important; 
+  text-align: center !important;
+  margin-top: 15px !important;
+  padding: 5px 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  animation: shakeError 0.4s ease-in-out forwards !important;
 }
 
 .history-submit-btn {
@@ -422,7 +420,6 @@
   cursor: not-allowed; 
   transform: none; 
   box-shadow: none;
-  /* 🟢 แอนิเมชันกระพริบตอนกำลังค้นหา (Loading) */
   animation: loadingPulse 1.5s infinite ease-in-out;
 }
 

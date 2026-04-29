@@ -119,35 +119,11 @@ export const getCaseAnswers = (id) => api.get(`/cases/${id}/answers`);
 export const getSystemEvaluationsStats = () => api.get('/evaluations/stats');
 export const getSystemEvaluationsList = (page = 1, limit = 10) => api.get(`/evaluations/list?page=${page}&limit=${limit}`);
 
+// 🟢 ดึง Token สดๆ จาก Storage ทุกครั้งที่ยิง API (ชัวร์ 100% ไม่ค้าง)
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('suth_token');
-  if (token) config.headers['Authorization'] = `Bearer ${token}`;
-  return config;
-});
-
-api.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err.response?.status === 401 || err.response?.status === 403) {
-      localStorage.removeItem('suth_user');
-      localStorage.removeItem('suth_token');
-      window.location.href = '/login';
-    }
-    return Promise.reject(err);
-  }
-);
-
-// 🟢 1. สร้างตัวแปรจำ Token ไว้ใน RAM เพื่อความรวดเร็ว
-let cachedToken = null;
-
-api.interceptors.request.use((config) => {
-  // 🟢 2. ถ้าไม่มีใน RAM ค่อยไปงัดจาก localStorage (ทำแค่ครั้งแรกที่เปิดเว็บ)
-  if (!cachedToken) {
-    cachedToken = localStorage.getItem('suth_token');
-  }
-  
-  if (cachedToken) {
-    config.headers['Authorization'] = `Bearer ${cachedToken}`;
+  const token = sessionStorage.getItem('suth_token') || localStorage.getItem('suth_token');
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`;
   }
   return config;
 });
@@ -156,8 +132,8 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401 || err.response?.status === 403) {
-      // 🟢 3. เคลียร์ค่าทิ้งทั้งหมดเมื่อ Token หมดอายุ
-      cachedToken = null;
+      sessionStorage.removeItem('suth_user');
+      sessionStorage.removeItem('suth_token');
       localStorage.removeItem('suth_user');
       localStorage.removeItem('suth_token');
       window.location.href = '/login';
@@ -165,10 +141,5 @@ api.interceptors.response.use(
     return Promise.reject(err);
   }
 );
-
-// 🟢 4. แถมฟังก์ชันสำหรับเซ็ต Token ใหม่ตอน Login เพื่อให้อัปเดตเข้า RAM ทันที (เผื่อเอาไปใช้ใน Login.jsx)
-export const updateApiToken = (newToken) => {
-  cachedToken = newToken;
-};
 
 export default api;

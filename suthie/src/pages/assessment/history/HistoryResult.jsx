@@ -258,20 +258,6 @@ if (loading) return (
   </div>
 );
 
-// --- ส่วนไม่พบข้อมูล (Empty State) ---
-if (!data.length) return (
-  <div className="hr-empty-screen">
-    <div className="hr-empty-container">
-      <div className="hr-empty-visual">
-        <div className="hr-empty-circle"></div>
-        <div className="hr-empty-icon-main">📋</div>
-      </div>
-      <div className="hr-empty-content">
-        <h3 className="hr-empty-title">ไม่พบข้อมูลประวัติ</h3>
-      </div>
-    </div>
-  </div>
-);
 
   const allNames = [...new Set(data.map(d => stripHtml(d.summary_data?.display_name)).filter(n => n && n !== '-'))];
   const allPhones = [...new Set(data.map(d => stripHtml(d.summary_data?.phone || d.summary_data?.raw_answers?.['เบอร์โทรศัพท์'] || d.summary_data?.display_phone)).filter(p => p && p !== '-'))];

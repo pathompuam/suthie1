@@ -21,7 +21,7 @@ const saveUserToList = (username) => {
 export default function Login() {
   const navigate = useNavigate();
 
-  // 🟢 1. บังคับ Logout ทันทีที่หลุดเข้ามาหน้า Login
+  // 🟢 1. บังคับ Logout ทันทีที่หลุดเข้ามาหน้า 
   useEffect(() => {
     localStorage.removeItem("suth_user");
     localStorage.removeItem("suth_token");

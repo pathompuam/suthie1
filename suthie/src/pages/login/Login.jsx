@@ -6,18 +6,6 @@ import logo from "../../assets/logoSUTH.png";
 import loginImage from "../../assets/login-image.png";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
-/* ── ดึง username ที่เคย login สำเร็จทั้งหมด ── */
-const getSavedUsers = () => {
-  try { return JSON.parse(localStorage.getItem("suth_saved_users") || "[]"); }
-  catch { return []; }
-};
-
-const saveUserToList = (username) => {
-  const list = getSavedUsers().filter(u => u !== username);
-  const updated = [username, ...list].slice(0, 8);
-  localStorage.setItem("suth_saved_users", JSON.stringify(updated));
-};
-
 export default function Login() {
   const navigate = useNavigate();
 
@@ -35,18 +23,12 @@ export default function Login() {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
 
-  /* ── Autocomplete ── */
-  const [suggestions, setSuggestions] = useState([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef(null);
-  const dropRef = useRef(null);
 
   // 🟢 Refs สำหรับ Turnstile
   const turnstileRef = useRef(null);
@@ -93,93 +75,9 @@ export default function Login() {
     };
   }, []);
 
-  useEffect(() => {
-    // ดึงแค่ Username ที่เคยจำไว้มาใส่ช่อง
-    const rememberedUser = localStorage.getItem("suth_remember_username");
-    if (rememberedUser) {
-      setUsername(rememberedUser);
-      setRememberMe(true); // ติ๊กถูกเอาไว้ให้เหมือนเดิม
-    }
-  }, []);
-
-  /* ── ปิด dropdown เมื่อคลิกนอก ── */
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (
-        dropRef.current && !dropRef.current.contains(e.target) &&
-        inputRef.current && !inputRef.current.contains(e.target)
-      ) {
-        setShowDropdown(false);
-        setActiveIndex(-1);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  /* ── กรอก username ── */
-  const handleUsernameChange = (val) => {
-    setUsername(val);
-    setError("");
-    setActiveIndex(-1);
-    const all = getSavedUsers();
-    if (val.trim() === "") {
-      setSuggestions(all);
-      setShowDropdown(all.length > 0);
-    } else {
-      const filtered = all.filter(u => u.toLowerCase().includes(val.toLowerCase()));
-      setSuggestions(filtered);
-      setShowDropdown(filtered.length > 0);
-    }
-  };
-
-  const handleUsernameFocus = () => {
-    const all = getSavedUsers();
-    const val = username.trim();
-    const filtered = val === "" ? all : all.filter(u => u.toLowerCase().includes(val.toLowerCase()));
-    setSuggestions(filtered);
-    setShowDropdown(filtered.length > 0);
-    setActiveIndex(-1);
-  };
-
-  const handleUsernameKeyDown = (e) => {
-    if (!showDropdown) return;
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setActiveIndex(i => Math.min(i + 1, suggestions.length - 1));
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setActiveIndex(i => Math.max(i - 1, -1));
-    } else if (e.key === "Enter" && activeIndex >= 0) {
-      e.preventDefault();
-      selectSuggestion(suggestions[activeIndex]);
-    } else if (e.key === "Escape") {
-      setShowDropdown(false);
-      setActiveIndex(-1);
-    }
-  };
-
-  const selectSuggestion = (name) => {
-    setUsername(name);
-    setShowDropdown(false);
-    setActiveIndex(-1);
-  };
-
-  const removeSuggestion = (e, name) => {
-    e.stopPropagation();
-    const updated = getSavedUsers().filter(u => u !== name);
-    localStorage.setItem("suth_saved_users", JSON.stringify(updated));
-    const newList = updated.filter(u =>
-      username === "" || u.toLowerCase().includes(username.toLowerCase())
-    );
-    setSuggestions(newList);
-    if (newList.length === 0) setShowDropdown(false);
-  };
-
   /* ── Submit ── */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setShowDropdown(false);
 
     if (!username || !password) {
       setError("กรุณากรอกชื่อผู้ใช้งานและรหัสผ่าน");
@@ -209,18 +107,10 @@ export default function Login() {
       if (response.data.success) {
         const { user, token } = response.data;
         
-        // 🟢 2. ถ้าติ๊ก "จดจำฉัน" ให้ฝังเครื่อง (localStorage) ถ้าไม่ติ๊กให้จำแค่ตอนเปิดแท็บ (sessionStorage)
-        if (rememberMe) {
-          localStorage.setItem("suth_user", JSON.stringify(user));
-          localStorage.setItem("suth_token", token);
-          localStorage.setItem("suth_remember_username", username);
-        } else {
-          sessionStorage.setItem("suth_user", JSON.stringify(user));
-          sessionStorage.setItem("suth_token", token);
-          localStorage.removeItem("suth_remember_username"); // เคลียร์ของเก่าทิ้งถ้าไม่ให้จำ
-        }
+        // 🟢 เก็บลง sessionStorage เท่านั้นเพื่อความปลอดภัย (Session จะหายไปเมื่อปิดเบราว์เซอร์)
+        sessionStorage.setItem("suth_user", JSON.stringify(user));
+        sessionStorage.setItem("suth_token", token);
 
-        saveUserToList(username);
         navigate("/admin/dashboard");
       }
     } catch (err) {
@@ -238,20 +128,6 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  };
-
-  /* ── highlight ── */
-  const highlight = (text, query) => {
-    if (!query.trim()) return <span>{text}</span>;
-    const idx = text.toLowerCase().indexOf(query.toLowerCase());
-    if (idx === -1) return <span>{text}</span>;
-    return (
-      <span>
-        {text.slice(0, idx)}
-        <mark className="ac-highlight">{text.slice(idx, idx + query.length)}</mark>
-        {text.slice(idx + query.length)}
-      </span>
-    );
   };
 
   return (
@@ -278,7 +154,7 @@ export default function Login() {
         <div className="login-right-card">
           <form onSubmit={handleSubmit} className="login-form" noValidate>
 
-            {/* ── Username + Autocomplete ── */}
+            {/* ── Username ── */}
             <div className="login-field">
               <div className="login-input-wrap" style={{ position: "relative" }}>
                 <span className="login-input-icon">
@@ -293,39 +169,9 @@ export default function Login() {
                   type="text"
                   placeholder="ชื่อผู้ใช้งาน "
                   value={username}
-                  onChange={(e) => handleUsernameChange(e.target.value)}
-                  onFocus={handleUsernameFocus}
-                  onKeyDown={handleUsernameKeyDown}
+                  onChange={(e) => { setUsername(e.target.value); setError(""); }}
                   autoComplete="off"
                 />
-                {showDropdown && suggestions.length > 0 && (
-                  <div className="ac-dropdown" ref={dropRef}>
-                    <div className="ac-dropdown__header">
-                      <span className="ac-dropdown__icon">🕐</span>
-                      บัญชีที่เคยใช้งาน
-                    </div>
-                    {suggestions.map((name, idx) => (
-                      <div
-                        key={name}
-                        className={`ac-item ${idx === activeIndex ? "ac-item--active" : ""}`}
-                        onMouseDown={() => selectSuggestion(name)}
-                        onMouseEnter={() => setActiveIndex(idx)}
-                      >
-                        <div className="ac-item__avatar">{name.charAt(0).toUpperCase()}</div>
-                        <div className="ac-item__text">
-                          <span className="ac-item__name">{highlight(name, username)}</span>
-                          <span className="ac-item__sub">บัญชีที่บันทึกไว้</span>
-                        </div>
-                        <button
-                          className="ac-item__remove"
-                          onMouseDown={(e) => removeSuggestion(e, name)}
-                          title="ลบออกจากรายการ"
-                          type="button"
-                        >✕</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
 
@@ -367,21 +213,6 @@ export default function Login() {
                   {error}
                 </p>
               )}
-            </div>
-
-            {/* ── Remember Me ── */}
-            <div className="login-remember-row">
-              <label className="login-remember" onClick={() => setRememberMe(v => !v)}>
-                <span className={`login-remember__box ${rememberMe ? "checked" : ""}`}>
-                  {rememberMe && (
-                    <svg viewBox="0 0 10 8" width="10" height="8" fill="none">
-                      <path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="1.8"
-                        strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </span>
-                <span className="login-remember__text">จดจำฉัน</span>
-              </label>
             </div>
 
             {/* ✅ Cloudflare Turnstile */}

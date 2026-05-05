@@ -357,14 +357,12 @@ export default function CaseActionTab(props) {
       <div className="cdm-tracking-box" style={{ opacity: masterCaseInfo?.status === 'Closed' ? 0.5 : 1, pointerEvents: masterCaseInfo?.status === 'Closed' ? 'none' : 'auto' }}>
         <div className="cdm-tracking-header">
           <h4 className="cdm-tracking-title"><FaPencilAlt /> บันทึกการติดตาม</h4>
-          {clinicType === 'behavior' && (
-            <button type="button" className="cdm-text-btn-manage" onClick={() => setIsManagingTemplates(true)}>
-              <FaCog /> จัดการชุดคำถาม
-            </button>
-          )}
+          <button type="button" className="cdm-text-btn-manage" onClick={() => setIsManagingTemplates(true)}>
+            <FaCog /> จัดการชุดคำถาม
+          </button>
         </div>
 
-        {clinicType === 'behavior' && !activeTemplate && (
+        {!activeTemplate && (
           <select
             className="cdm-tpl-selector"
             onChange={(e) => {

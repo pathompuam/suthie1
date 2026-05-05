@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { FiClock, FiLogIn, FiChevronLeft, FiChevronRight, FiCheckCircle, FiShield, FiHeart, FiPhoneCall } from "react-icons/fi";
+import { FiClock, FiLogIn, FiChevronLeft, FiChevronRight, FiCheckCircle, FiShield, FiHeart, FiPhoneCall,FiArrowLeft } from "react-icons/fi";
 import "./SutLanding2.css";
 
 import logo from "../../assets/logoSUTH.png";
@@ -356,7 +356,7 @@ export default function SutLanding2() {
                             setIsFlipped(false);
                           }}
                         >
-                          เลือกคลินิกใหม่
+                          <FiArrowLeft style={{ fontSize: '18px', flexShrink: 0 }} /> <span>ย้อนกลับ</span>
                         </button>
                       )}
                     </div>

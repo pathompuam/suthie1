@@ -40,9 +40,8 @@ router.get('/forms', async (req, res) => {
     try {
         const sort = req.query.sort || 'lastOpened';
 
-        const cacheKey = `all_forms_${sort}`; // 🟢 ตั้งชื่อกุญแจแคช
+        const cacheKey = `all_forms_${sort}`;
 
-        // 🟢 1. เช็ค Cache ก่อน
         if (formCache.has(cacheKey)) {
             return res.json(formCache.get(cacheKey));
         }
@@ -71,7 +70,6 @@ router.get('/forms', async (req, res) => {
                 publish_start_date: form.publish_start_date, publish_end_date: form.publish_end_date 
             };
         });
-        // 🟢 2. จำข้อมูลใส่ Cache
         formCache.set(cacheKey, formattedForms);
         res.json(formattedForms);
     } catch (err) {
@@ -99,10 +97,8 @@ router.post('/counts', async (req, res) => {
             return res.status(400).json({ error: 'Invalid formIds' });
         }
 
-        // 🟢 1. สร้าง Key สำหรับ Cache (เช่น counts_1_2_3)
         const cacheKey = `counts_${formIds.sort().join('_')}`;
         
-        // 🟢 2. ถ้ามีใน Cache ให้ส่งกลับทันที ไม่ต้องกวน Database!
         if (formCache.has(cacheKey)) {
             return res.json({ data: formCache.get(cacheKey) });
         }
@@ -123,7 +119,6 @@ router.post('/counts', async (req, res) => {
             if (!(formId in countMap)) countMap[formId] = 0;
         });
 
-        // 🟢 3. จำตัวเลขนี้ไว้ใน Cache 60 วินาที (ให้ตรงกับจังหวะที่หน้าเว็บขอข้อมูลพอดี)
         formCache.set(cacheKey, countMap, 60);
 
         res.json({ data: countMap });
@@ -299,48 +294,115 @@ router.post('/forms/:id/submit', async (req, res) => {
         }
         await connection.commit();
 
-        // แจ้งเตือน Telegram
-        try {
-           const scoreResults = summaryData?.score_results || summaryData?.scoreResults || [];
-            const isHighRisk = scoreResults.some(s => {
-                const c = (s.color || '').toLowerCase().replace(/[^a-f0-9]/g, '');
-                const l = (s.label || '').toLowerCase();
-                return c.includes('d93025') || c.includes('e53935') || c.includes('f44336') || l.includes('สูง') || l.includes('รุนแรง');
-            });
 
-            if (isHighRisk) {
-                const stripHtml = str => str ? String(str).replace(/<[^>]*>?/gm, '').trim() : '';
-                
-                const phoneStr = stripHtml(summaryData?.display_phone || summaryData?.phone || '-');
-                const cleanPhone = phoneStr.replace(/[^0-9+]/g, '');
+  try {
+    const safe = summaryData || {};
 
-                const message = [
-                    `🚨 <b>แจ้งเตือนเคสเสี่ยงสูง!</b>`,
-                    `📋 <b>แบบประเมิน:</b> ${stripHtml(formRows[0]?.title || `ฟอร์ม #${formId}`)}`,
-                    `🔗 Case ID: CASE-${String(responseId).padStart(4, '0')}`, // ✅ แก้ไขจุลภาคที่ตกหล่น
-                    `👤 <b>ชื่อ:</b> ${stripHtml(summaryData?.display_name) || '-'}`,
-                    `📞 <b>เบอร์ติดต่อ:</b> <a href="tel:${cleanPhone}">${phoneStr}</a>`,
-                ].join('\n');
+    // 🟢 ดึง score
+    const scoreResults = Array.isArray(safe.score_results)
+        ? safe.score_results
+        : Array.isArray(safe.scoreResults)
+            ? safe.scoreResults
+            : [];
 
-                const frontendBaseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    // 🟢 เช็คความเสี่ยง
+const isHighRisk = scoreResults.some(s => {
+    const colorClean = (s.color || '').toLowerCase().replace(/[^a-f0-9]/g, '');
+    const label = (s.label || '').toLowerCase();
+    return (
+        colorClean.includes('d93025') ||
+        colorClean.includes('e53935') ||
+        colorClean.includes('f44336') ||
+        label.includes('สูง') ||
+        label.includes('รุนแรง')
+    );
+});
 
-                const replyMarkup = {
-                    inline_keyboard: [
-                        [
-                            { 
-                                text: "🌐 เปิดดูข้อมูลในระบบ", 
-                                url: `${frontendBaseUrl}/admin/risk-cases` 
-                            } 
-                        ]
-                    ]
-                };
+    // 🟢 helper
+    const stripHtml = (str) => str ? String(str).replace(/<[^>]*>?/gm, '').trim() : '';
 
-                sendTelegramAlert(message, replyMarkup);
-            }
+    // 🟢 สร้างข้อมูล
+    const formTitle = stripHtml(formRows[0]?.title || '') || `ฟอร์ม #${formId}`;
+    const caseId = `CASE-${String(responseId).padStart(4, '0')}`;
+    const displayName = stripHtml(safe.display_name || '') || '-';
 
-        } catch (err) { console.error('[Telegram] Error:', err.message); }
+    const rawPhone = safe.display_phone || safe.phone || '-';
+    const phoneStr = stripHtml(rawPhone);
+    const cleanPhone = phoneStr.replace(/[^0-9+]/g, '');
+
+    // 🟢 หัวข้อ
+    const alertHeader = isHighRisk
+        ? `🚨 <b>แจ้งเตือนเคสเสี่ยงสูง!</b>`
+        : `✅ <b>แจ้งเตือนเคส</b>`;
+
+    // 🟢 ข้อมูลเพิ่มเติม (สถานะ และ คลินิก)
+    const clinicLabel = {
+        'general': 'ทั่วไป',
+        'teenager': 'คลินิกวัยรุ่น',
+        'behavior': 'คลินิก LSM',
+        'sti': 'คลินิกโรคติดต่อฯ'
+    }[clinicType] || 'ทั่วไป';
+
+    const isMediumRisk = !isHighRisk && scoreResults.some(s => {
+        const colorClean = (s.color || '').toLowerCase().replace(/[^a-f0-9]/g, '');
+        const label = (s.label || '').toLowerCase();
+        return colorClean.includes('ff9800') || colorClean.includes('fbbc04') || label.includes('ปานกลาง');
+    });
+
+    const riskLabel = isHighRisk ? 'สูง' : (isMediumRisk ? 'ปานกลาง' : 'ปกติ/ต่ำ');
+
+    // ✅ แก้จุดสำคัญ (กัน message พัง)
+    let phoneLine = '';
+
+    if (cleanPhone && cleanPhone.length >= 8) {
+        phoneLine = `📞 <b>เบอร์ติดต่อ:</b> <a href="tel:${cleanPhone}">${phoneStr}</a>`;
+    } else {
+        phoneLine = `📞 <b>เบอร์ติดต่อ:</b> -`;
+    }
+
+    // 🟢 message components
+    const riskLine = isHighRisk ? `` : `⚠️ <b>ความเสี่ยง:</b> ${riskLabel}`;
+    
+    // 🟢 ตรวจสอบสถานะ (ติดตามผล หรือ เคสใหม่)
+    const dbFormType = String(formRows[0]?.form_type || '').trim().toLowerCase();
+    const statusLine = (dbFormType === 'follow-up') ? `📌 <b>สถานะ:</b> ติดตามผล` : `📌 <b>สถานะ:</b> เคสใหม่`;
+    
+    const clinicLine = `🏥 <b>คลินิก:</b> ${clinicLabel}`;
+
+    // 🟢 รวมร่าง message
+    const message = [
+        alertHeader,
+        `📋 <b>แบบประเมิน:</b> ${formTitle}`,
+        clinicLine,
+        riskLine,
+        statusLine,
+        `🔗 <b>Case ID:</b> ${caseId}`,
+        `👤 <b>ชื่อ:</b> ${displayName}`,
+        phoneLine
+    ].filter(line => line !== '').join('\n');
+
+    // 🟢 URL แยกตามประเภทเคส
+    const frontendBaseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const caseUrl = isHighRisk
+        ? `${frontendBaseUrl}/admin/risk-cases`
+        : `${frontendBaseUrl}/admin/cases`;
+
+    const replyMarkup = {
+        inline_keyboard: [[
+            { text: "🌐 เปิดดูข้อมูลในระบบ", url: caseUrl }
+        ]]
+    };
+    // ✅ ส่งจริง
+    await sendTelegramAlert(message, replyMarkup);
+
+    console.log(`✅ ส่ง Telegram แล้ว | ${caseId} | เสี่ยง: ${isHighRisk}`);
+
+} catch (err) {
+    console.error('[Telegram ERROR]:', err);
+}
 
         res.status(201).json({ message: "บันทึกคำตอบสำเร็จ", responseId, masterCaseId });
+
     } catch (err) {
         await connection.rollback();
         console.error(err);
@@ -351,7 +413,6 @@ router.post('/forms/:id/submit', async (req, res) => {
 });
 
 // 11. ดึงคำตอบทั้งหมด (Dashboard ฝั่งแอดมิน - 🟢 ถอดรหัส & เพิ่ม Pagination)
-
 router.get('/forms/:id/responses', async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 100;
@@ -362,11 +423,7 @@ router.get('/forms/:id/responses', async (req, res) => {
             [req.params.id, limit, offset]
         );
         
-        // 🟢 เปลี่ยนจาก .map() ธรรมดา เป็น Promise.all 
         const decryptedRows = await Promise.all(rows.map(async (r) => {
-            // การใช้ async ใน map จะทำให้ Node.js มองแต่ละรอบเป็น Promise ย่อยๆ
-            // ช่วยให้ Event Loop มีจังหวะหายใจไปรับงานอื่นได้
-            
             if (r.identity_value) r.identity_value = safeDecrypt(r.identity_value);
             
             if (r.summary_data) {
@@ -417,7 +474,7 @@ router.patch('/forms/:id/clinic', async (req, res) => {
   }
 });
 
-// 🟢 API สำหรับคัดลอกฟอร์ม (Duplicate) - (🟢 เพิ่ม form_type)
+// 🟢 API สำหรับคัดลอกฟอร์ม (Duplicate)
 router.post('/forms/:id/duplicate', async (req, res) => {
     try {
         const formId = req.params.id;
@@ -430,6 +487,7 @@ router.post('/forms/:id/duplicate', async (req, res) => {
         const originalForm = rows[0];
         const newTitle = `(สำเนา) ${originalForm.title}`;
 
+        // 🟢 ตรวจสอบข้อมูลก่อนบันทึก (กันข้อมูลเพี้ยนจากการที่ MySQL Driver คืนค่าเป็น Object/String ต่างกัน)
         const themeData = typeof originalForm.theme === 'object' ? JSON.stringify(originalForm.theme) : originalForm.theme;
         const questionsData = typeof originalForm.questions === 'object' ? JSON.stringify(originalForm.questions) : originalForm.questions;
 
@@ -450,6 +508,9 @@ router.post('/forms/:id/duplicate', async (req, res) => {
                 originalForm.publish_end_date || null
             ]
         );
+
+        // 🟢 ล้าง Cache ทั้งหมดเพื่อให้ฟอร์มใหม่แสดงขึ้นมาทันที
+        formCache.flushAll();
 
         res.status(201).json({ 
             message: "ทำสำเนาฟอร์มสำเร็จ", 
@@ -489,7 +550,6 @@ router.post('/submit-system-feedback', async (req, res) => {
 
 router.get('/evaluations/stats', async (req, res) => {
     try {
-        // 1. ดึงค่าเฉลี่ยทั้งหมด (🟢 เพิ่มการหาค่าเฉลี่ยของ sus ทั้ง 10 ข้อ)
         const [stats] = await db.query(`
             SELECT 
                 COUNT(id) as total_votes,
@@ -505,7 +565,6 @@ router.get('/evaluations/stats', async (req, res) => {
             FROM system_satisfaction_evaluations
         `);
 
-        // 2. ดึงคอมเมนต์ 10 อันล่าสุด ที่มีการพิมพ์ข้อความจริงๆ
         const [comments] = await db.query(`
             SELECT suggestions, created_at 
             FROM system_satisfaction_evaluations 
@@ -530,11 +589,9 @@ router.get('/evaluations/list', async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const offset = (page - 1) * limit;
 
-        // นับจำนวนข้อมูลทั้งหมด
         const [totalRows] = await db.query(`SELECT COUNT(*) as count FROM system_satisfaction_evaluations`);
         const total = totalRows[0].count;
 
-        // ดึงข้อมูลตามหน้า (เรียงจากใหม่ไปเก่า)
         const [rows] = await db.query(`
             SELECT 
                 id, sat_ui, sat_speed, sat_content, sat_access, sat_overall, 

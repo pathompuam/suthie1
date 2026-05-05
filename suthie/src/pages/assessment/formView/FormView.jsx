@@ -69,7 +69,13 @@ const FormView = () => {
             if (!q.id) q.id = `q_${qIdx}`;
             if (q.type === "group" && Array.isArray(q.subQuestions)) {
               q.subQuestions.forEach((sq, sIdx) => {
-                sq.id = `${q.id}_${sq.id || sIdx}`;
+                const subId = sq.id || String(sIdx);
+                // 🟢 ป้องกันการเติม Prefix ซ้ำซ้อน (เช่น q1_q1_sq1) โดยเช็คก่อนว่ามีอยู่แล้วหรือไม่
+                if (!String(subId).startsWith(`${q.id}_`)) {
+                  sq.id = `${q.id}_${subId}`;
+                } else {
+                  sq.id = subId;
+                }
               });
             }
           });

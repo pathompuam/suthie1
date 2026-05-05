@@ -45,6 +45,14 @@ export const getQuestionTitles = (groupedSteps) => {
 
 export const calculateQuestionScore = (q, rawAns) => {
   let totalScore = 0;
+
+  // 🟢 ฟังก์ชันช่วยหา Index ของตัวเลือกแบบยืดหยุ่น (ลบ HTML และ Trim ก่อนเทียบ)
+  const findItemIndex = (list, val) => {
+    if (!val || !list || !Array.isArray(list)) return -1;
+    const cleanVal = String(val).replace(/<[^>]+>/g, '').trim().toLowerCase();
+    return list.findIndex(item => String(item).replace(/<[^>]+>/g, '').trim().toLowerCase() === cleanVal);
+  };
+
   if (q.type === 'bmi') {
     const w = parseFloat(rawAns.weight) || 0; 
     const hCm = parseFloat(rawAns.height) || 0;
@@ -59,30 +67,36 @@ export const calculateQuestionScore = (q, rawAns) => {
     
     Object.entries(rawAns).forEach(([rowIndex, val]) => {
       const rIdx = Number(rowIndex);
+      
       const getScoreForCell = (colIdx) => {
-        if (q.cellScores && q.cellScores[rIdx] && q.cellScores[rIdx][colIdx] !== undefined) return Number(q.cellScores[rIdx][colIdx]);
+        // 🟢 กรณีโหมด Cell: ใช้คะแนนรายช่อง (ถ้ามีการกำหนดไว้)
+        if (mode === "cell" && q.cellScores && q.cellScores[rIdx] && q.cellScores[rIdx][colIdx] !== undefined) {
+          return Number(q.cellScores[rIdx][colIdx]);
+        }
+        // 🟢 กรณีโหมด Column: ใช้คะแนนของคอลัมน์นั้นๆ
         if (mode === "column") return Number(colScores[colIdx]) || 0;
+        // 🟢 กรณีโหมด Row: ใช้คะแนนของแถวนั้นๆ
         if (mode === "row") return Number(rowScores[rIdx]) || 0;
         return 0;
       };
 
       if (Array.isArray(val)) {
         val.forEach(v => { 
-          const colIdx = (q.cols||[]).indexOf(v); 
+          const colIdx = findItemIndex(q.cols, v);
           if (colIdx !== -1) totalScore += getScoreForCell(colIdx); 
         });
       } else {
-        const colIdx = (q.cols||[]).indexOf(val); 
+        const colIdx = findItemIndex(q.cols, val);
         if (colIdx !== -1) totalScore += getScoreForCell(colIdx); 
       }
     });
   } else if (q.type === 'multiple_choice' || q.type === 'dropdown' || q.type === 'faculty') {
-    const optIdx = (q.options || []).indexOf(rawAns);
+    const optIdx = findItemIndex(q.options, rawAns);
     if (optIdx !== -1 && q.optionScores) totalScore += Number(q.optionScores[optIdx]) || 0;
   } else if (q.type === 'checkboxes') {
     if (Array.isArray(rawAns)) { 
       rawAns.forEach(v => { 
-        const optIdx = (q.options || []).indexOf(v); 
+        const optIdx = findItemIndex(q.options, v);
         if (optIdx !== -1 && q.optionScores) totalScore += Number(q.optionScores[optIdx]) || 0; 
       }); 
     }

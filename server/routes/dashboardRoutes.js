@@ -190,7 +190,7 @@ router.get('/charts/:formId/:questionId', async (req, res) => {
 // ==========================================
 router.get('/admin/master-cases/stats', async (req, res) => {
     try {
-        const { clinic } = req.query;
+        const { clinic, form_id } = req.query;
         
         // 🟢 1. ดึง f.questions (โครงสร้างฟอร์ม) มาด้วย เพื่อเอามาเช็ค Type
         let sql = `
@@ -206,6 +206,10 @@ router.get('/admin/master-cases/stats', async (req, res) => {
         if (clinic && clinic !== 'all') {
             sql += " AND f.clinic_type = ?";
             params.push(clinic);
+        }
+        if (form_id) {
+            sql += " AND r.form_id = ?";
+            params.push(form_id);
         }
 
         const [rows] = await db.query(sql, params);

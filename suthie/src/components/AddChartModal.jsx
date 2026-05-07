@@ -170,6 +170,8 @@ const AddChartModal = ({ isOpen, onClose, onSave, formId }) => {
           q.type === "multiple_choice" ||
           q.type === "checkboxes" ||
           q.type === "dropdown" ||
+          q.type === "faculty" ||
+          q.type === "user_status" ||
           q.type === "grid_multiple" ||
           q.type === "grid_checkbox"
         );

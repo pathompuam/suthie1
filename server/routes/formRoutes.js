@@ -458,7 +458,8 @@ router.get('/forms/:id/questions', async (req, res) => {
     const [rows] = await db.query("SELECT questions FROM forms WHERE id = ?", [req.params.id]);
     if (!rows.length) return res.status(404).json({ message: "Form not found" });
     const questions = typeof rows[0].questions === "string" ? JSON.parse(rows[0].questions) : rows[0].questions;
-    res.json(questions.map(q => ({ id: q.id, title: (q.title || "ไม่มีชื่อคำถาม").replace(/<[^>]*>/g, ''), type: q.type })));
+    // คืนค่า questions ทั้งหมดเพื่อให้ frontend นำไปใช้จัดการได้ครบถ้วน (เช่น scoringRules)
+    res.json(questions);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }

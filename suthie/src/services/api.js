@@ -104,7 +104,7 @@ export const deleteNoteTemplate = (id) => api.delete(`/templates/${id}`);
 export const getFormQuestions = (formId) => api.get(`/forms/${formId}/questions`);
 
 // - Dashboard Charts - //
-export const getMasterCaseStats = (clinic) => api.get('/admin/master-cases/stats', { params: { clinic } });
+export const getMasterCaseStats = (clinic, formId) => api.get('/admin/master-cases/stats', { params: { clinic, form_id: formId } });
 export const getChartData = (formId, questionId, startDate, endDate) => { return api.get(`/charts/${formId}/${questionId}`, {params: { startDate, endDate }});};
 export const getDashboardSettings = () => api.get('/dashboard-settings/settings');
 export const saveDashboardSettings = (data) => api.post('/dashboard-settings/settings', data);

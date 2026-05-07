@@ -130,7 +130,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchMasterCaseStats = async () => {
       try {
-        const res = await getMasterCaseStats(selectedClinic);
+        const res = await getMasterCaseStats(selectedClinic, selectedFormId);
         if (res.data && typeof res.data === 'object' && !res.data.error) {
           setMasterCaseStats(prev => ({ ...prev, ...res.data }));
         }
@@ -139,7 +139,7 @@ export default function Dashboard() {
       }
     };
     fetchMasterCaseStats();
-  }, [selectedClinic, selectedCase]);
+  }, [selectedClinic, selectedCase, selectedFormId]);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -186,13 +186,19 @@ export default function Dashboard() {
     useSensor(PointerSensor, { activationConstraint: { distance: 15 } })
   );
 
-  const prevDateRef = useRef({ startDate: "", endDate: "" });
+  const prevFetchRef = useRef({ startDate: null, endDate: null, formId: null });
   useEffect(() => {
-    const prev = prevDateRef.current;
-    if (prev.startDate === startDate && prev.endDate === endDate) return;
-    prevDateRef.current = { startDate, endDate };
-
     if (!selectedFormId || charts.length === 0) return;
+
+    // 🟢 ตรวจสอบว่าต้องโหลดข้อมูลใหม่หรือไม่ (ถ้า Form ID หรือ วันที่เปลี่ยน)
+    const needsFetch =
+      prevFetchRef.current.startDate !== startDate ||
+      prevFetchRef.current.endDate !== endDate ||
+      prevFetchRef.current.formId !== selectedFormId;
+
+    if (!needsFetch) return;
+
+    prevFetchRef.current = { startDate, endDate, formId: selectedFormId };
 
     const refetchCharts = async () => {
       try {
@@ -538,6 +544,7 @@ export default function Dashboard() {
                       question={chart.question}
                       data={chart.data}
                       colors={COLORS}
+                      formQuestions={currentFormDetails?.questions || []}
                       onRemove={removeChart}
                     />
                   ))}
@@ -646,7 +653,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
   );
 };
 
-const SortableChart = React.memo(function SortableChart({ id, title, type, question, data, colors, onRemove }) {
+const SortableChart = React.memo(function SortableChart({ id, title, type, question, data, colors, formQuestions, onRemove }) {
   const [isSelected, setIsSelected] = useState(false);
   const cardRef = useRef(null);
 
@@ -668,6 +675,10 @@ const SortableChart = React.memo(function SortableChart({ id, title, type, quest
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // 🟢 ดึงเกณฑ์คะแนนของคำถามนี้มาเตรียมไว้
+  const questionDetails = formQuestions?.find(q => String(q.id) === String(question));
+  const scoringRules = questionDetails?.scoringRules || [];
 
   const processedPieData = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -733,11 +744,17 @@ const SortableChart = React.memo(function SortableChart({ id, title, type, quest
       }
     });
 
-    return Object.keys(counts).map(k => ({
-      name: k,
-      value: counts[k]
-    })).sort((a, b) => b.value - a.value);
-  }, [data, question]);
+    // 🟢 5. แปลงเป็น Array และใส่สีตามเกณฑ์
+    return Object.keys(counts).map((k, index) => {
+      // ค้นหาเกณฑ์ที่ตรงกับชื่อ
+      const matchedRule = scoringRules.find(r => r.label === k);
+      return {
+        name: k,
+        value: counts[k],
+        color: matchedRule?.color || colors[index % colors.length]
+      };
+    }).sort((a, b) => b.value - a.value);
+  }, [data, question, colors, scoringRules]);
 
   return (
     <div
@@ -773,8 +790,8 @@ const SortableChart = React.memo(function SortableChart({ id, title, type, quest
                     label={renderCustomizedLabel}
                     labelLine={false}
                   >
-                    {processedPieData.map((_, index) => (
-                      <Cell key={index} fill={colors[index % colors.length]} />
+                    {processedPieData.map((entry, index) => (
+                      <Cell key={index} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip formatter={(value, name) => [`${value} ราย`, name]} />
@@ -793,8 +810,8 @@ const SortableChart = React.memo(function SortableChart({ id, title, type, quest
                   <Tooltip cursor={{ fill: "rgba(0,0,0,0.04)" }} />
 
                   <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={60}>
-                    {processedPieData.map((_, index) => (
-                      <Cell key={index} fill={colors[index % colors.length]} />
+                    {processedPieData.map((entry, index) => (
+                      <Cell key={index} fill={entry.color} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -826,7 +843,7 @@ const SortableChart = React.memo(function SortableChart({ id, title, type, quest
                 <div style={{
                   width: "8px",
                   height: "8px",
-                  background: colors[index % colors.length],
+                  background: item.color,
                   borderRadius: "50%"
                 }} />
                 <span style={{ color: "#475569" }}>

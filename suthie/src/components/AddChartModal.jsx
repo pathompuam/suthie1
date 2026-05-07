@@ -59,10 +59,21 @@ const AddChartModal = ({ isOpen, onClose, onSave, formId }) => {
   const [chartType, setChartType] = useState('pie');
   const [chartData, setChartData] = useState([]);
 
+  const COLORS = [
+    "#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#FF8FAB",
+    "#C77DFF", "#00C2A8", "#FFA94D", "#A0E7E5", "#B4F8C8",
+    "#FBE7C6", "#FFAEBC", "#A0C4FF", "#BDB2FF", "#FFC6FF",
+    "#9BF6FF", "#CAFFBF", "#FDFFB6", "#FFD6A5", "#E4C1F9"
+  ];
+
   
   // Logic ประมวลผลข้อมูล: ใช้ item.result ที่ได้จาก Backend เป็นหลักเพื่อความแม่นยำ
   const processedPieData = React.useMemo(() => {
     if (!chartData || chartData.length === 0) return [];
+
+    // 🟢 ค้นหาเกณฑ์คะแนนของคำถามที่เลือก
+    const selectedQDetails = questions.find(q => String(q.id) === String(selectedQuestion));
+    const scoringRules = selectedQDetails?.scoringRules || [];
 
     const counts = {};
     chartData.forEach((item) => {
@@ -128,8 +139,16 @@ const AddChartModal = ({ isOpen, onClose, onSave, formId }) => {
       }
     });
 
-    return Object.keys(counts).map(k => ({ name: k, value: counts[k] })).sort((a, b) => b.value - a.value);
-  }, [chartData, selectedQuestion]);
+    // 🟢 5. ใส่สีตามเกณฑ์
+    return Object.keys(counts).map((k, index) => {
+      const matchedRule = scoringRules.find(r => r.label === k);
+      return {
+        name: k,
+        value: counts[k],
+        color: matchedRule?.color || COLORS[index % COLORS.length]
+      };
+    }).sort((a, b) => b.value - a.value);
+  }, [chartData, selectedQuestion, questions]);
 
   useEffect(() => {
     if (!formId) {
@@ -199,13 +218,6 @@ const AddChartModal = ({ isOpen, onClose, onSave, formId }) => {
 
     loadPreviewChart();
   }, [selectedQuestion, formId]);
-
-  const COLORS = [
-    "#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#FF8FAB",
-    "#C77DFF", "#00C2A8", "#FFA94D", "#A0E7E5", "#B4F8C8",
-    "#FBE7C6", "#FFAEBC", "#A0C4FF", "#BDB2FF", "#FFC6FF",
-    "#9BF6FF", "#CAFFBF", "#FDFFB6", "#FFD6A5", "#E4C1F9"
-  ];
 
   useEffect(() => {
     if (isOpen) {
@@ -382,7 +394,7 @@ const AddChartModal = ({ isOpen, onClose, onSave, formId }) => {
                           labelLine={false}
                         >
                           {processedPieData.map((entry, index) => (
-                            <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                            <Cell key={index} fill={entry.color} />
                           ))}
                         </Pie>
                         <Tooltip formatter={(value, name) => [`${value} คน`, name]} />
@@ -415,7 +427,7 @@ const AddChartModal = ({ isOpen, onClose, onSave, formId }) => {
                         <div style={{
                           width: "8px",
                           height: "8px",
-                          background: COLORS[index % COLORS.length],
+                          background: item.color,
                           borderRadius: "50%"
                         }} />
                         <span style={{ color: "#475569", fontWeight: "500" }}>
@@ -451,7 +463,7 @@ const AddChartModal = ({ isOpen, onClose, onSave, formId }) => {
 
                         <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={65}>
                           {processedPieData.map((entry, index) => (
-                            <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                            <Cell key={index} fill={entry.color} />
                           ))}
 
                         </Bar>
@@ -471,7 +483,7 @@ const AddChartModal = ({ isOpen, onClose, onSave, formId }) => {
                   }}>
                     {processedPieData.map((item, index) => (
                       <div key={index} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", background: 'transparent', padding: '4px 12px', borderRadius: '15px', border: 'none' }}>
-                        <div style={{ width: "8px", height: "8px", background: COLORS[index % COLORS.length], borderRadius: "50%" }} />
+                        <div style={{ width: "8px", height: "8px", background: item.color, borderRadius: "50%" }} />
                         <span style={{ color: "#475569" }}>{item.name}: <strong>{item.value} คน</strong></span>
                       </div>
                     ))}
